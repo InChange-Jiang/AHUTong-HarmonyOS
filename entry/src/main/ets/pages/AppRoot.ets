@@ -34,6 +34,7 @@ export struct AppRoot {
   @StorageLink('ahu_mock_revision') @Watch('onMockRevision') mockRevision: number = 0;
   @StorageLink('ahu_gray_revision') @Watch('onGrayRevision') grayRevision: number = 0;
   @StorageLink('ahu_debug_close_revision') @Watch('onDebugClose') debugCloseRevision: number = 0;
+  @StorageLink('ahu_session_active') @Watch('onSessionActiveChanged') sessionActive: boolean = false;
   debugEnabled: boolean = false;
   @BuilderParam debugContent: () => void = this.emptyDebugContent;
   private readonly scheduleSetupRepository: ScheduleSetupRepository = new ScheduleSetupRepository();
@@ -59,11 +60,19 @@ export struct AppRoot {
     this.setupComplete = this.scheduleSetupRepository.hasCompletedSetup();
     this.onLaunchRouteChanged();
     this.loadGrayState();
-    // 与安卓保持一致：启动后尝试自动同步学期配置，失败也不影响正常使用
     this.syncScheduleConfig();
   }
 
   aboutToDisappear(): void { BackPressDispatcher.unregister('app_root'); }
+
+  private onSessionActiveChanged(): void {
+    // 登录/恢复会话完成后再同步学期，等待教务会话建立
+    if (this.sessionActive) {
+      setTimeout(() => {
+        this.syncScheduleConfig();
+      }, 1500);
+    }
+  }
 
   private handleBackPress(): boolean {
     if (this.activePage.length > 0) { this.activePage = ''; return true; }
@@ -76,7 +85,6 @@ export struct AppRoot {
   }
 
   async syncScheduleConfig(): Promise<void> {
-    if (!this.scheduleSetupRepository.hasCompletedSetup()) return;
     const config = await this.scheduleSetupRepository.syncRemoteConfig();
     if (!config) return;
     const revision = AppStorage.get<number>('ahu_schedule_config_revision') ?? 0;

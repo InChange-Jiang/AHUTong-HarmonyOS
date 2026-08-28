@@ -24,17 +24,19 @@ interface CurrentTeachWeekResponse {
 export function resolveRemoteScheduleConfig(response: CurrentTeachWeekResponse,
   now: Date): ScheduleDisplayConfig | undefined {
   const match = response.currentSemester.trim().match(/^(\d{4}-\d{4})-([123])$/);
+  if (!match) return undefined;
+  // 寒暑假期间教务返回 weekIndex=-1（isInSemester=false），此时按新学期第 1 周处理
   const week = Math.floor(response.weekIndex);
-  if (!match || !Number.isFinite(week) || week < 1 || week > 30) return undefined;
+  const normalizedWeek = (Number.isFinite(week) && week >= 1 && week <= 30) ? week : 1;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const mondayOffset = (today.getDay() + 6) % 7;
-  today.setDate(today.getDate() - mondayOffset - (week - 1) * 7);
+  today.setDate(today.getDate() - mondayOffset - (normalizedWeek - 1) * 7);
   const month = `${today.getMonth() + 1}`.padStart(2, '0');
   const day = `${today.getDate()}`.padStart(2, '0');
   return {
     schoolYear: match[1],
     schoolTerm: match[2],
-    currentWeek: week,
+    currentWeek: normalizedWeek,
     startDate: `${today.getFullYear()}-${month}-${day}`
   };
 }
