@@ -1,4 +1,4 @@
-import { AhuColors, AhuDimens, AhuInsetCard, AhuLoading, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuLoading, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { common } from '@kit.AbilityKit';
 import { DownloadedFile, GitHubContentItem, REPOSITORIES, RepoConfig, RepositoryManager } from './RepositoryManager';
 import { BackPressDispatcher } from 'core_common';
@@ -297,46 +297,43 @@ export struct RepositoryPage {
   build() {
     Stack({ alignContent: Alignment.Center }) {
       Column() {
-      Row() {
-        Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.back());
-        Text(this.title()).fontSize(AhuTypography.pageTitle).fontWeight(FontWeight.Bold)
-          .fontColor(AhuColors.onSurface).layoutWeight(1).maxLines(1);
-        if (!this.showDownloads && this.selectedRepoId.length > 0) {
-          Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading && !this.refreshing)
-            .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.load(this.currentPath, true));
-        }
-        if (this.showDownloads && this.downloads.length > 0) {
-          Button(this.managingDownloads ? '完成' : '管理', { type: ButtonType.Capsule })
-            .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => {
-              this.managingDownloads = !this.managingDownloads;
-              if (!this.managingDownloads) this.selectedDownloadPaths = [];
+        AhuToolbar({ title: this.title(), onBack: () => this.back() }) {
+          if (!this.showDownloads && this.selectedRepoId.length > 0) {
+            Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading && !this.refreshing)
+              .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.load(this.currentPath, true));
+          }
+          if (this.showDownloads && this.downloads.length > 0) {
+            Button(this.managingDownloads ? '完成' : '管理', { type: ButtonType.Capsule })
+              .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => {
+                this.managingDownloads = !this.managingDownloads;
+                if (!this.managingDownloads) this.selectedDownloadPaths = [];
+              });
+          }
+          Button(this.showDownloads ? '浏览' : `已下载 ${this.downloads.length}`, { type: ButtonType.Capsule })
+            .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface)
+            .onClick(() => {
+              this.showDownloads = !this.showDownloads; this.managingDownloads = false;
+              this.selectedDownloadPaths = []; this.refreshDownloads();
             });
         }
-        Button(this.showDownloads ? '浏览' : `已下载 ${this.downloads.length}`, { type: ButtonType.Capsule })
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface)
-          .onClick(() => {
-            this.showDownloads = !this.showDownloads; this.managingDownloads = false;
-            this.selectedDownloadPaths = []; this.refreshDownloads();
-          });
-      }.width('100%').padding({ left: 16, right: 12, top: 24 });
-      if (this.error.length > 0) {
-        Row() {
-          Text(this.error).fontSize(AhuTypography.label).fontColor(AhuColors.error).layoutWeight(1);
-          Button('关闭', { type: ButtonType.Capsule }).height(32).onClick(() => { this.error = ''; });
-        }.margin({ left: 16, right: 16 }).padding(12).backgroundColor('#22F44336').borderRadius(12);
-      }
-      Scroll() {
-        Column({ space: AhuDimens.sectionSpacing }) {
-      if (this.showDownloads) this.downloadedList();
-      else if (this.selectedRepoId.length === 0) this.repositorySelector();
-      else this.browser();
+        Scroll() {
+          Column({ space: AhuDimens.sectionSpacing }) {
+            if (this.error.length > 0) {
+              Row() {
+                Text(this.error).fontSize(AhuTypography.label).fontColor(AhuColors.error).layoutWeight(1);
+                Button('关闭', { type: ButtonType.Capsule }).height(32).onClick(() => { this.error = ''; });
+              }.margin({ left: 16, right: 16 }).padding(12).backgroundColor('#22F44336').borderRadius(12);
+            }
+            if (this.showDownloads) this.downloadedList();
+            else if (this.selectedRepoId.length === 0) this.repositorySelector();
+            else this.browser();
+          }
+          .width('100%');
         }
-        .width('100%');
-      }
-      .width('100%')
-      .layoutWeight(1)
-      .scrollBar(BarState.Off);
+        .width('100%')
+        .layoutWeight(1)
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off);
       }
       .width('100%')
       .height('100%');

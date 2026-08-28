@@ -170,7 +170,12 @@ export struct FreeClassroomPage {
   }
   build() {
     Column({ space: 14 }) {
-      Row({ space: 12 }) { Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28).backgroundColor(AhuColors.card).onClick(() => this.onBack()); Text('空闲教室').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1); }
+      Row({ space: 12 }) {
+        Button() {
+          SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(22).fontColor([AhuColors.onSurface]);
+        }.type(ButtonType.Circle).width(40).height(40).backgroundColor(AhuColors.card).onClick(() => this.onBack());
+        Text('空闲教室').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
+      }
         .padding({ left: 16, right: 16, top: 24 });
       Scroll() { Column({ space: 14 }) {
         if (this.filtersExpanded) this.filterContent();

@@ -6,6 +6,7 @@ interface ToolEntry { id: string; title: string; symbol: Resource; tint: string;
 const TOOL_ENTRIES: Array<ToolEntry> = [
   { id: 'bathroom', title: '浴室缴费', symbol: $r('sys.symbol.drop'), tint: '#26A69A' },
   { id: 'electricity', title: '电控缴费', symbol: $r('sys.symbol.bolt'), tint: '#FFB300' },
+  { id: 'card_recharge', title: '校园卡充值', symbol: $r('sys.symbol.creditcard'), tint: '#FF7043' },
   { id: 'grade', title: '成绩单', symbol: $r('sys.symbol.doc_text'), tint: '#FFC107' },
   { id: 'phone_book', title: '校园电话本', symbol: $r('sys.symbol.phone'), tint: '#009688' },
   { id: 'exam', title: '考场查询', symbol: $r('sys.symbol.doc_text'), tint: '#4CAF50' },

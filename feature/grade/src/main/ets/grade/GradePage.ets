@@ -1,6 +1,7 @@
-import { AhuChip, AhuColors, AhuEmptyState, AhuInsetCard, AhuLoading, AhuTypography } from 'core_designsystem';
+import { AhuChip, AhuColors, AhuEmptyState, AhuInsetCard, AhuLoading, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { GpaRankInfo, Grade, GradeItem, GradeStudentProfile, GpaSemesterSub, TermGrade } from 'core_model';
 import { GradeRepository, GradeRepositoryProvider } from 'data_grade';
+import { BackPressDispatcher } from 'core_common';
 
 @Component
 export struct GradePage {
@@ -8,6 +9,7 @@ export struct GradePage {
   @State grade?: Grade = undefined;
   @State selectedTerm: string = '';
   @State query: string = '';
+  @State searchActive: boolean = false;
   @State isLoading: boolean = true;
   @State errorMessage: string = '';
   @State profiles: Array<GradeStudentProfile> = [];
@@ -17,7 +19,22 @@ export struct GradePage {
   onBack: () => void = () => {};
 
   aboutToAppear(): void {
+    BackPressDispatcher.register('grade_page', () => this.handleBackPress());
     this.load(false);
+  }
+
+  aboutToDisappear(): void {
+    BackPressDispatcher.unregister('grade_page');
+  }
+
+  private handleBackPress(): boolean {
+    if (this.searchActive) {
+      this.searchActive = false;
+      this.query = '';
+      return true;
+    }
+    this.onBack();
+    return true;
   }
 
   private async load(refresh: boolean): Promise<void> {
@@ -60,6 +77,14 @@ export struct GradePage {
     return `${term.schoolYear ?? ''}-${term.schoolTerm ?? ''}`;
   }
 
+  private termLabel(term: TermGrade | undefined): string {
+    return `${term?.schoolYear ?? ''} 第 ${term?.schoolTerm ?? ''} 学期`;
+  }
+
+  private termLabels(): Array<string> {
+    return (this.grade?.termGradeList ?? []).map((term: TermGrade): string => this.termLabel(term));
+  }
+
   private selected(): TermGrade | undefined {
     return (this.grade?.termGradeList ?? []).find((term: TermGrade): boolean => this.termKey(term) === this.selectedTerm);
   }
@@ -83,29 +108,6 @@ export struct GradePage {
     }
     return all.filter((item: GradeItem): boolean =>
       `${item.course ?? ''} ${item.courseNum ?? ''} ${item.courseType ?? ''}`.toLowerCase().includes(normalized));
-  }
-
-  @Builder
-  private header() {
-    Column({ space: 12 }) {
-      Row({ space: 12 }) {
-        Button('‹', { type: ButtonType.Circle })
-          .width(40).height(40).fontSize(28)
-          .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card)
-          .onClick(() => this.onBack());
-        Text('成绩单').fontSize(28).fontWeight(FontWeight.Bold).fontColor(AhuColors.onSurface).layoutWeight(1);
-        Button('↻', { type: ButtonType.Circle })
-          .width(40).height(40).fontSize(22)
-          .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card)
-          .onClick(() => this.load(true));
-      }
-      TextInput({ text: this.query, placeholder: '搜索课程、课程号或课程性质' })
-        .width('100%').height(48).borderRadius(24)
-        .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface)
-        .onChange((value: string) => { this.query = value; });
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 24 });
   }
 
   @Builder
@@ -158,7 +160,28 @@ export struct GradePage {
 
   build() {
     Column({ space: 16 }) {
-      this.header();
+      AhuToolbar({
+        title: '成绩单',
+        subtitle: this.termLabel(this.selected()),
+        searchable: true,
+        filterable: true,
+        refreshable: true,
+        filterMenuItems: this.termLabels(),
+        searchActive: this.searchActive,
+        searchText: this.query,
+        searchPlaceholder: '搜索课程、课程号或课程性质',
+        onBack: () => this.onBack(),
+        onSearchRequest: () => { this.searchActive = true; },
+        onSearchInput: (value: string) => { this.query = value; },
+        onSearchExit: () => { this.searchActive = false; this.query = ''; },
+        onFilterSelect: (index: number) => {
+          const terms = this.grade?.termGradeList ?? [];
+          if (index >= 0 && index < terms.length) {
+            this.selectedTerm = this.termKey(terms[index]);
+          }
+        },
+        onRefresh: () => this.load(true)
+      });
       if (this.isLoading) {
         AhuLoading({ message: '正在加载成绩' });
       } else if (this.errorMessage.length > 0) {
@@ -178,17 +201,6 @@ export struct GradePage {
                   }, (profile: GradeStudentProfile) => profile.id);
                 } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
               }
-              Scroll() {
-                Row({ space: 8 }) {
-                  ForEach(this.grade?.termGradeList ?? [], (term: TermGrade) => {
-                    AhuChip({
-                      text: `${term.schoolYear} 第 ${term.schoolTerm} 学期`,
-                      selected: this.selectedTerm === this.termKey(term),
-                      clickAction: () => { this.selectedTerm = this.termKey(term); }
-                    });
-                  }, (term: TermGrade) => this.termKey(term));
-                }
-              }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
               this.summary();
             }
             if (this.visibleItems().length === 0) {
@@ -198,7 +210,7 @@ export struct GradePage {
                 (item: GradeItem) => `${item.semesterId}-${item.courseNum}`);
             }
           }.width('100%').padding({ bottom: 24 });
-        }.width('100%').layoutWeight(1).scrollBar(BarState.Off);
+        }.width('100%').layoutWeight(1).align(Alignment.Top).scrollBar(BarState.Off);
       }
     }
     .width('100%').height('100%').backgroundColor(AhuColors.pageBackground);

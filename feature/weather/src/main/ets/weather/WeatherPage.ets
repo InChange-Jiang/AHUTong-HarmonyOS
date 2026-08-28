@@ -1,4 +1,4 @@
-import { AhuColors, AhuDimens, AhuInsetCard, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { ForecastDay, HourlyForecast, LifeIndexItem, WeatherAlert, WeatherResponse } from 'core_model';
 import { WeatherHomeConfig, WeatherRepository, WeatherRepositoryProvider } from 'data_weather';
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
@@ -112,29 +112,26 @@ export struct WeatherPage {
 
   build() {
     Column() {
-      Row({ space: 10 }) {
-        Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-          .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => this.onBack());
-        Text(this.location()).fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
+      AhuToolbar({ title: this.location(), onBack: () => this.onBack() }) {
         Button(this.searching ? '取消' : '城市', { type: ButtonType.Capsule }).backgroundColor(AhuColors.card)
           .fontColor(AhuColors.onSurface).onClick(() => { this.searching = !this.searching; this.city = ''; });
         Button(this.locating ? '定位中' : '定位', { type: ButtonType.Capsule }).enabled(!this.locating && !this.loading)
           .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.locate());
         Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading).backgroundColor(AhuColors.card)
           .fontColor(AhuColors.onSurface).onClick(() => this.load());
-      }.width('100%').padding({ left: 16, right: 16, top: 24 });
-      if (this.searching) {
-        Row({ space: 8 }) {
-          TextInput({ text: this.city, placeholder: '输入城市，如 合肥' }).layoutWeight(1)
-            .onChange((value: string) => this.city = value);
-          Button('查询', { type: ButtonType.Capsule }).enabled(this.city.trim().length > 0 && !this.loading)
-            .onClick(() => { this.load(this.city); this.searching = false; });
-        }.padding({ left: 16, right: 16 });
       }
-      if (this.locationMessage.length > 0) Text(this.locationMessage).fontSize(AhuTypography.label)
-        .fontColor(AhuColors.onSurfaceSecondary).padding({ left: 20, right: 20 });
       Scroll() {
         Column({ space: AhuDimens.sectionSpacing }) {
+          if (this.searching) {
+            Row({ space: 8 }) {
+              TextInput({ text: this.city, placeholder: '输入城市，如 合肥' }).layoutWeight(1)
+                .onChange((value: string) => this.city = value);
+              Button('查询', { type: ButtonType.Capsule }).enabled(this.city.trim().length > 0 && !this.loading)
+                .onClick(() => { this.load(this.city); this.searching = false; });
+            }.padding({ left: 16, right: 16 });
+          }
+          if (this.locationMessage.length > 0) Text(this.locationMessage).fontSize(AhuTypography.label)
+            .fontColor(AhuColors.onSurfaceSecondary).padding({ left: 20, right: 20 });
       Column({ space: 8 }) {
         Text('天气设置').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).width('100%');
         Text('选择要在首页卡片上显示的信息：').fontSize(AhuTypography.label)

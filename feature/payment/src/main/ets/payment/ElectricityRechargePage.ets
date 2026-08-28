@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import {
   CardPaymentRepository, CardPaymentRepositoryProvider, ElectricityOption, ElectricityRoomInfo
 } from 'data_payment';
@@ -223,12 +223,11 @@ export struct ElectricityRechargePage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      AhuScreen({ scrollable: true }) {
-        Row({ space: 12 }) {
-          Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-            .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => this.onBack());
-          Text('电费充值').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
-        }.width('100%').padding({ left: 16, right: 16, top: 20 });
+      Column() {
+        AhuToolbar({ title: '电费充值', onBack: () => this.onBack() }) {
+        }
+        Scroll() {
+          Column({ space: AhuDimens.sectionSpacing }) {
         AhuInsetCard() {
           Column({ space: 12 }) {
             Text('选择宿舍').fontSize(AhuTypography.body).fontWeight(FontWeight.Bold);
@@ -275,7 +274,17 @@ export struct ElectricityRechargePage {
         Button('确认', { type: ButtonType.Capsule }).alignSelf(ItemAlign.End).margin({ right: 16 })
           .enabled(this.roomInfo !== undefined && Number(this.amount) > 0 && !this.paying)
           .fontColor(AhuColors.onPrimaryAction).backgroundColor(AhuColors.primaryAction).onClick(() => this.showConfirm = true);
+          }
+          .width('100%')
+          .padding({ bottom: AhuDimens.bottomNavClearance });
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off);
       }
+      .width('100%')
+      .height('100%');
       if (this.showConfirm) {
         Column() { this.confirmPanel(); }.width('100%').height('100%')
           .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');

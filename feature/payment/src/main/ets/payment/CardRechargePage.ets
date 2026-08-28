@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { AhuCache } from 'core_datastore';
 import { common, Want } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
@@ -129,12 +129,11 @@ export struct CardRechargePage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      AhuScreen({ scrollable: true }) {
-        Row({ space: 12 }) {
-          Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-            .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => this.onBack());
-          Text('校园卡充值').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
-        }.width('100%').padding({ left: 16, right: 16, top: 20 });
+      Column() {
+        AhuToolbar({ title: '校园卡充值', onBack: () => this.onBack() }) {
+        }
+        Scroll() {
+          Column({ space: AhuDimens.sectionSpacing }) {
         AhuInsetCard() {
           Column({ space: 14 }) {
             Text('校园卡账户').fontSize(AhuTypography.body).fontWeight(FontWeight.Bold);
@@ -174,7 +173,17 @@ export struct CardRechargePage {
         Text('支付宝充值会复制当前姓名和学号，并跳转到支付宝校园卡页面完成支付。')
           .fontSize(AhuTypography.label).fontColor(AhuColors.onSurfaceSecondary)
           .padding({ left: 24, right: 24 }).lineHeight(20);
+          }
+          .width('100%')
+          .padding({ bottom: AhuDimens.bottomNavClearance });
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off);
       }
+      .width('100%')
+      .height('100%');
       if (this.showConfirm) {
         Column() { this.confirmPanel(); }
           .width('100%').height('100%').justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)

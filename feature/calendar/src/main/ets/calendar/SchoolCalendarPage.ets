@@ -1,4 +1,4 @@
-import { AhuColors, AhuLoading, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuLoading, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { common } from '@kit.AbilityKit';
 import { CalendarImageSaver } from './CalendarImageSaver';
 import { SchoolCalendarRepository } from 'data_calendar';
@@ -53,17 +53,26 @@ export struct SchoolCalendarPage {
 
   build() {
     Column({ space: 12 }) {
-      Row({ space: 12 }) {
-        Button('‹', { type: ButtonType.Circle })
-          .width(40).height(40).fontSize(28).backgroundColor(AhuColors.card).onClick(() => this.onBack());
-        Text('校历').fontSize(28).fontWeight(FontWeight.Bold).fontColor(AhuColors.onSurface).layoutWeight(1);
-        Button('↻', { type: ButtonType.Circle })
-          .width(40).height(40).fontSize(22).backgroundColor(AhuColors.card).onClick(() => this.refresh());
-        Button(this.isSaving ? '…' : '存', { type: ButtonType.Circle })
-          .width(40).height(40).fontSize(15).enabled(!this.isSaving && !this.isLoading && !this.hasError)
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.save());
+      AhuToolbar({
+        title: '校历',
+        refreshable: true,
+        refreshing: this.isLoading,
+        onBack: () => this.onBack(),
+        onRefresh: () => this.refresh()
+      }) {
+        Button() {
+          SymbolGlyph($r('sys.symbol.arrow_down_circle'))
+            .fontSize(20)
+            .fontColor([AhuColors.onSurface]);
+        }
+        .type(ButtonType.Circle)
+        .width(40)
+        .height(40)
+        .backgroundColor(AhuColors.card)
+        .opacity(this.isSaving ? 0.6 : 1)
+        .enabled(!this.isSaving && !this.isLoading && !this.hasError)
+        .onClick(() => this.save());
       }
-      .width('100%').padding({ left: 16, right: 16, top: 24 });
 
       Stack({ alignContent: Alignment.Center }) {
         Image(this.imageSource)
@@ -97,7 +106,7 @@ export struct SchoolCalendarPage {
           }.alignItems(HorizontalAlign.Center);
         }
       }
-      .width('100%').layoutWeight(1).padding(12);
+      .width('100%').layoutWeight(1).padding(12).clip(true);
       if (this.message.length > 0) {
         Text(this.message).fontSize(AhuTypography.label)
           .fontColor(this.message === '已保存到图库' ? AhuColors.primaryAction : AhuColors.error)
