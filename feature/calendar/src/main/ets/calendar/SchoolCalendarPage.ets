@@ -52,7 +52,7 @@ export struct SchoolCalendarPage {
   }
 
   build() {
-    Column({ space: 12 }) {
+    Column({ space: 16 }) {
       AhuToolbar({
         title: '校历',
         refreshable: true,

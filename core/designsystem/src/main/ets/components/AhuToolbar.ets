@@ -116,7 +116,7 @@ export struct AhuToolbar {
             if (this.onRefresh !== undefined) this.onRefresh();
           });
         }
-        Row() { this.actions(); }
+        Row({ space: 8 }) { this.actions(); }
       }
       .alignItems(VerticalAlign.Center);
     }

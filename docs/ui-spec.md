@@ -77,6 +77,7 @@ Stack (全屏)
 | 项 | token / 值 |
 |----|-----------|
 | 顶部内边距 | `AhuDimens.titleTop` = 32 |
+| 标题栏与内容区间距 | 16（基准取考场查询）；成绩单因主副标题用 12 |
 | 左右内边距 | `AhuDimens.contentHorizontal` = 16 |
 | 标题字号 | `AhuTypography.pageTitle` = 28，加粗 |
 | 副标题字号 | `AhuTypography.label` = 14，`onSurfaceSecondary` |

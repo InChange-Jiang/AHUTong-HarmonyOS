@@ -4,6 +4,7 @@ import { WeatherHomeConfig, WeatherRepository, WeatherRepositoryProvider } from 
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { geoLocationManager } from '@kit.LocationKit';
 import { BackPressDispatcher } from 'core_common';
+import { WeatherSettingsDialog } from './WeatherSettingsDialog';
 
 interface NamedLifeIndex { name: string; value?: LifeIndexItem; }
 
@@ -14,7 +15,6 @@ export struct WeatherPage {
   @State loading: boolean = true;
   @State error: string = '';
   @State city: string = '';
-  @State searching: boolean = false;
   @State showOnHome: boolean = false;
   @State showLocation: boolean = true;
   @State showTemperature: boolean = true;
@@ -23,6 +23,28 @@ export struct WeatherPage {
   @State locating: boolean = false;
   @State locationMessage: string = '';
   onBack: () => void = () => {};
+
+  private settingsDialogController: CustomDialogController = new CustomDialogController({
+    builder: WeatherSettingsDialog({
+      showOnHome: this.showOnHome,
+      showLocation: this.showLocation,
+      showTemperature: this.showTemperature,
+      showCondition: this.showCondition,
+      showAqi: this.showAqi,
+      onSettingChange: (key: string, value: boolean) => {
+        if (key === 'showOnHome') this.showOnHome = value;
+        else if (key === 'showLocation') this.showLocation = value;
+        else if (key === 'showTemperature') this.showTemperature = value;
+        else if (key === 'showCondition') this.showCondition = value;
+        else if (key === 'showAqi') this.showAqi = value;
+        this.saveHomeConfig();
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    autoCancel: true,
+    offset: { dx: 0, dy: 0 }
+  });
 
   aboutToAppear(): void {
     BackPressDispatcher.register('weather_page', () => this.handleBackPress());
@@ -34,7 +56,6 @@ export struct WeatherPage {
   aboutToDisappear(): void { BackPressDispatcher.unregister('weather_page'); }
 
   private handleBackPress(): boolean {
-    if (this.searching) { this.searching = false; this.city = ''; return true; }
     this.onBack();
     return true;
   }
@@ -102,57 +123,30 @@ export struct WeatherPage {
     return rain(weather.weather) || hourlyRain || dailyRain ? '建议带伞' : '暂时不用带伞';
   }
 
-  @Builder
-  private weatherSetting(label: string, enabled: boolean, onChange: (value: boolean) => void) {
-    Row() {
-      Text(label).fontSize(AhuTypography.body).fontColor(AhuColors.onSurface).layoutWeight(1);
-      Toggle({ type: ToggleType.Switch, isOn: enabled }).onChange(onChange);
-    }.width('100%').padding({ top: 2, bottom: 2 });
-  }
-
   build() {
-    Column() {
+    Column({ space: 16 }) {
       AhuToolbar({ title: this.location(), onBack: () => this.onBack() }) {
-        Button(this.searching ? '取消' : '城市', { type: ButtonType.Capsule }).backgroundColor(AhuColors.card)
-          .fontColor(AhuColors.onSurface).onClick(() => { this.searching = !this.searching; this.city = ''; });
-        Button(this.locating ? '定位中' : '定位', { type: ButtonType.Capsule }).enabled(!this.locating && !this.loading)
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.locate());
-        Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading).backgroundColor(AhuColors.card)
-          .fontColor(AhuColors.onSurface).onClick(() => this.load());
+        Button() {
+          SymbolGlyph($r('sys.symbol.gearshape')).fontSize(20).fontColor([AhuColors.onSurface]);
+        }
+        .type(ButtonType.Circle).width(40).height(40).backgroundColor(AhuColors.card)
+        .onClick(() => this.settingsDialogController.open());
+        Button() {
+          SymbolGlyph($r('sys.symbol.location_up')).fontSize(20).fontColor([AhuColors.onSurface]);
+        }
+        .type(ButtonType.Circle).width(40).height(40).backgroundColor(AhuColors.card)
+        .enabled(!this.locating && !this.loading).onClick(() => this.locate());
+        Button() {
+          SymbolGlyph($r('sys.symbol.arrow_clockwise')).fontSize(20).fontColor([AhuColors.onSurface]);
+        }
+        .type(ButtonType.Circle).width(40).height(40).backgroundColor(AhuColors.card)
+        .enabled(!this.loading).onClick(() => this.load());
       }
       Scroll() {
         Column({ space: AhuDimens.sectionSpacing }) {
-          if (this.searching) {
-            Row({ space: 8 }) {
-              TextInput({ text: this.city, placeholder: '输入城市，如 合肥' }).layoutWeight(1)
-                .onChange((value: string) => this.city = value);
-              Button('查询', { type: ButtonType.Capsule }).enabled(this.city.trim().length > 0 && !this.loading)
-                .onClick(() => { this.load(this.city); this.searching = false; });
-            }.padding({ left: 16, right: 16 });
-          }
           if (this.locationMessage.length > 0) Text(this.locationMessage).fontSize(AhuTypography.label)
             .fontColor(AhuColors.onSurfaceSecondary).padding({ left: 20, right: 20 });
-      Column({ space: 8 }) {
-        Text('天气设置').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).width('100%');
-        Text('选择要在首页卡片上显示的信息：').fontSize(AhuTypography.label)
-          .fontColor(AhuColors.onSurfaceSecondary).width('100%');
-        this.weatherSetting('在首页显示天气', this.showOnHome, (value: boolean) => {
-          this.showOnHome = value; this.saveHomeConfig();
-        });
-        this.weatherSetting('显示城市名', this.showLocation, (value: boolean) => {
-          this.showLocation = value; this.saveHomeConfig();
-        });
-        this.weatherSetting('显示温度', this.showTemperature, (value: boolean) => {
-          this.showTemperature = value; this.saveHomeConfig();
-        });
-        this.weatherSetting('显示天气状况', this.showCondition, (value: boolean) => {
-          this.showCondition = value; this.saveHomeConfig();
-        });
-        this.weatherSetting('显示空气质量', this.showAqi, (value: boolean) => {
-          this.showAqi = value; this.saveHomeConfig();
-        });
-      }.width('100%').padding({ left: 20, right: 20 });
-      if (this.loading && !this.weather) {
+          if (this.loading && !this.weather) {
         Column({ space: 12 }) { LoadingProgress().width(48).height(48).color(AhuColors.primaryAction); Text('正在获取天气…'); }
           .width('100%').padding(48);
       } else if (!this.weather) {

@@ -91,7 +91,7 @@ export struct GradePage {
 
   private currentTermRank(): GpaSemesterSub | undefined {
     const semesterId = this.selected()?.termGradeList?.[0]?.semesterId;
-    return this.rank?.gpaSemesterSubs.find((item: GpaSemesterSub) => item.semesterId === semesterId);
+    return (this.rank?.gpaSemesterSubs ?? []).find((item: GpaSemesterSub) => item.semesterId === semesterId);
   }
 
   private profileLabel(profile: GradeStudentProfile): string {

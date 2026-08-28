@@ -2,6 +2,9 @@ import { AhuColors, AhuDimens, AhuInsetCard, AhuToolbar, AhuTypography } from 'c
 import { CampusItem, LostFoundItem, LostFoundPublishRequest, LostFoundType } from 'core_model';
 import { LostFoundRepository, getLostFoundRepository } from 'data_portal';
 import { BackPressDispatcher } from 'core_common';
+import { LostFoundFilterDialog } from './LostFoundFilterDialog';
+import { LostFoundMyPostsDialog } from './LostFoundMyPostsDialog';
+import { LostFoundPublishDialog } from './LostFoundPublishDialog';
 
 @Component
 export struct LostFoundPage {
@@ -14,28 +17,68 @@ export struct LostFoundPage {
   @State loadingMore: boolean = false;
   @State error: string = '';
   @State selected?: LostFoundItem = undefined;
-  @State showPublish: boolean = false;
   @State campuses: Array<CampusItem> = [];
   @State types: Array<LostFoundType> = [];
-  @State publishCampusId: string = '';
-  @State publishTypeId: string = '';
-  @State publishState: string = '1';
-  @State linkman: string = '';
-  @State phone: string = '';
-  @State title: string = '';
-  @State num1: string = '';
-  @State publishing: boolean = false;
-  @State publishError: string = '';
-  @State showMyPosts: boolean = false;
-  @State deleteTarget?: LostFoundItem = undefined;
-  @State deleting: boolean = false;
-  @State deleteError: string = '';
   @State searchExpanded: boolean = false;
   @State query: string = '';
   @State selectedCampusId: string = '';
   @State selectedTypeId: string = '';
   @State imageViewerIndex: number = -1;
   onBack: () => void = () => {};
+
+  private publishDialogController: CustomDialogController = new CustomDialogController({
+    builder: LostFoundPublishDialog({
+      campuses: this.campuses,
+      types: this.types,
+      onPublish: async (linkman: string, phone: string, title: string, num1: string,
+        campusId: string, typeId: string, state: string): Promise<string> => {
+        const request: LostFoundPublishRequest = { imgs: [], linkman: linkman, phone: phone, title: title, num1: num1,
+          campusid: campusId, typeid: typeId, state: state, auditresult: 1 };
+        const result = await this.repository.publish(request);
+        if (!result.isSuccess) return result.error?.message ?? '发布失败';
+        this.state = Number(state);
+        await this.load(true);
+        return '';
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    autoCancel: true,
+    offset: { dx: 0, dy: 0 }
+  });
+
+  private myPostsDialogController: CustomDialogController = new CustomDialogController({
+    builder: LostFoundMyPostsDialog({
+      posts: this.myPosts(),
+      onDelete: async (id: string): Promise<string> => {
+        const result = await this.repository.delete(id);
+        if (!result.isSuccess) return result.error?.message ?? '删除失败';
+        this.items = this.items.filter((item: LostFoundItem) => item.id !== id);
+        return '';
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    autoCancel: true,
+    offset: { dx: 0, dy: 0 }
+  });
+
+  private filterDialogController: CustomDialogController = new CustomDialogController({
+    builder: LostFoundFilterDialog({
+      campuses: this.campuses,
+      types: this.types,
+      selectedCampusId: this.selectedCampusId,
+      selectedTypeId: this.selectedTypeId,
+      onApply: (campusId: string, typeId: string) => {
+        this.selectedCampusId = campusId;
+        this.selectedTypeId = typeId;
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    autoCancel: true,
+    offset: { dx: 0, dy: 0 }
+  });
 
   aboutToAppear(): void {
     BackPressDispatcher.register('lost_found_page', () => this.handleBackPress());
@@ -45,9 +88,6 @@ export struct LostFoundPage {
 
   private handleBackPress(): boolean {
     if (this.imageViewerIndex >= 0) { this.imageViewerIndex = -1; return true; }
-    if (this.deleteTarget) { this.deleteTarget = undefined; this.deleteError = ''; return true; }
-    if (this.showPublish) { this.showPublish = false; return true; }
-    if (this.showMyPosts) { this.showMyPosts = false; return true; }
     if (this.selected) { this.selected = undefined; return true; }
     if (this.searchExpanded) { this.searchExpanded = false; this.query = ''; return true; }
     this.onBack();
@@ -61,36 +101,9 @@ export struct LostFoundPage {
     if (typeResult.isSuccess && typeResult.data) this.types = typeResult.data;
   }
 
-  private async publish(): Promise<void> {
-    if (this.linkman.trim().length === 0 || this.phone.trim().length === 0 || this.title.trim().length === 0 ||
-      this.publishCampusId.length === 0 || this.publishTypeId.length === 0) {
-      this.publishError = '请填写联系人、联系电话和描述，并选择校区与物品类型'; return;
-    }
-    this.publishing = true; this.publishError = '';
-    const request: LostFoundPublishRequest = { imgs: [], linkman: this.linkman.trim(), phone: this.phone.trim(),
-      title: this.title.trim(), num1: this.num1.trim(), campusid: this.publishCampusId,
-      typeid: this.publishTypeId, state: this.publishState, auditresult: 1 };
-    const result = await this.repository.publish(request);
-    this.publishing = false;
-    if (!result.isSuccess) { this.publishError = result.error?.message ?? '发布失败'; return; }
-    this.showPublish = false; this.linkman = ''; this.phone = ''; this.title = ''; this.num1 = '';
-    this.state = Number(this.publishState); await this.load(true);
-  }
-
   private myPosts(): Array<LostFoundItem> {
     const userId = this.repository.currentUserId();
     return this.items.filter((item: LostFoundItem) => item.pubuser?.idNumber === userId);
-  }
-
-  private async confirmDelete(): Promise<void> {
-    if (!this.deleteTarget || this.deleting) return;
-    this.deleting = true; this.deleteError = '';
-    const id = this.deleteTarget.id;
-    const result = await this.repository.delete(id);
-    this.deleting = false;
-    if (!result.isSuccess) { this.deleteError = result.error?.message ?? '删除失败'; return; }
-    this.items = this.items.filter((item: LostFoundItem) => item.id !== id);
-    this.deleteTarget = undefined;
   }
 
   private async load(refresh: boolean): Promise<void> {
@@ -121,6 +134,10 @@ export struct LostFoundPage {
     const path = item.imgs[index].imgPath;
     if (/^https?:\/\//.test(path)) return path;
     return `https://adwmh.ahu.edu.cn${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
+  private hasFilter(): boolean {
+    return this.selectedCampusId.length > 0 || this.selectedTypeId.length > 0;
   }
 
   private filteredItems(): Array<LostFoundItem> {
@@ -158,99 +175,6 @@ export struct LostFoundPage {
   }
 
   @Builder
-  private publishSheet() {
-    Column({ space: 12 }) {
-      Row() {
-        Text('发布信息').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).layoutWeight(1);
-        Button('×', { type: ButtonType.Circle }).width(38).height(38).backgroundColor(AhuColors.chipUnselected)
-          .fontColor(AhuColors.onSurface).onClick(() => this.showPublish = false);
-      }.width('100%');
-      Text('当前版本与 Android 一致，暂不支持上传图片。').fontSize(AhuTypography.label)
-        .fontColor(AhuColors.onSurfaceSecondary);
-      TextInput({ text: this.linkman, placeholder: '联系人（必填）' }).onChange((value: string) => this.linkman = value);
-      TextInput({ text: this.phone, placeholder: '联系电话（必填）' }).type(InputType.PhoneNumber)
-        .onChange((value: string) => this.phone = value);
-      TextInput({ text: this.title, placeholder: '物品描述（必填）' }).onChange((value: string) => this.title = value);
-      TextInput({ text: this.num1, placeholder: '编号/补充说明（选填）' }).onChange((value: string) => this.num1 = value);
-      Text('选择校区').fontSize(AhuTypography.body).fontWeight(FontWeight.Medium);
-      Scroll() { Row({ space: 8 }) { ForEach(this.campuses, (item: CampusItem) => {
-        Button(item.campusName, { type: ButtonType.Capsule })
-          .fontColor(this.publishCampusId === item.id ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-          .backgroundColor(this.publishCampusId === item.id ? AhuColors.primaryAction : AhuColors.chipUnselected)
-          .onClick(() => this.publishCampusId = item.id);
-      }, (item: CampusItem) => item.id); } }.width('100%').scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off);
-      Text('选择物品类型').fontSize(AhuTypography.body).fontWeight(FontWeight.Medium);
-      Scroll() { Row({ space: 8 }) { ForEach(this.types, (item: LostFoundType) => {
-        Button(item.typeName, { type: ButtonType.Capsule })
-          .fontColor(this.publishTypeId === item.typeId ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-          .backgroundColor(this.publishTypeId === item.typeId ? AhuColors.primaryAction : AhuColors.chipUnselected)
-          .onClick(() => this.publishTypeId = item.typeId);
-      }, (item: LostFoundType) => item.typeId); } }.width('100%').scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off);
-      Text('信息类型').fontSize(AhuTypography.body).fontWeight(FontWeight.Medium);
-      Row({ space: 8 }) {
-        Button('失物招领', { type: ButtonType.Capsule }).layoutWeight(1)
-          .fontColor(this.publishState === '1' ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-          .backgroundColor(this.publishState === '1' ? AhuColors.primaryAction : AhuColors.chipUnselected)
-          .onClick(() => this.publishState = '1');
-        Button('寻物启事', { type: ButtonType.Capsule }).layoutWeight(1)
-          .fontColor(this.publishState === '2' ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-          .backgroundColor(this.publishState === '2' ? AhuColors.primaryAction : AhuColors.chipUnselected)
-          .onClick(() => this.publishState = '2');
-      }.width('100%');
-      if (this.publishError.length > 0) Text(this.publishError).fontSize(AhuTypography.label).fontColor(AhuColors.error);
-      Button(this.publishing ? '发布中…' : '发布', { type: ButtonType.Capsule }).width('100%').enabled(!this.publishing)
-        .fontColor(AhuColors.onPrimaryAction).backgroundColor(AhuColors.primaryAction).onClick(() => this.publish());
-    }.width('92%').height('88%').padding(22).backgroundColor(AhuColors.card).borderRadius(28)
-      .alignItems(HorizontalAlign.Start);
-  }
-
-  @Builder
-  private myPostsSheet() {
-    Column({ space: 12 }) {
-      Row() {
-        Text('管理我的帖子').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).layoutWeight(1);
-        Button('×', { type: ButtonType.Circle }).width(38).height(38).backgroundColor(AhuColors.chipUnselected)
-          .fontColor(AhuColors.onSurface).onClick(() => this.showMyPosts = false);
-      }.width('100%');
-      if (this.myPosts().length === 0) {
-        Text('当前列表中没有由你发布的帖子').fontColor(AhuColors.onSurfaceSecondary).padding({ top: 32, bottom: 32 });
-      } else {
-        Scroll() {
-          Column({ space: 10 }) {
-            ForEach(this.myPosts(), (item: LostFoundItem) => {
-              Row({ space: 12 }) {
-                Column({ space: 4 }) {
-                  Text(item.title).fontSize(AhuTypography.body).fontWeight(FontWeight.Bold).maxLines(2);
-                  Text(item.createtime ?? '').fontSize(AhuTypography.label).fontColor(AhuColors.onSurfaceSecondary);
-                }.layoutWeight(1).alignItems(HorizontalAlign.Start);
-                Button('删除', { type: ButtonType.Capsule }).fontColor(AhuColors.error)
-                  .backgroundColor(AhuColors.chipUnselected).onClick(() => { this.deleteError = ''; this.deleteTarget = item; });
-              }.width('100%').padding(12).backgroundColor(AhuColors.cardStrong).borderRadius(16);
-            }, (item: LostFoundItem) => item.id);
-          }.width('100%');
-        }.layoutWeight(1).scrollBar(BarState.Auto);
-      }
-    }.width('92%').height('76%').padding(22).backgroundColor(AhuColors.card).borderRadius(28)
-      .alignItems(HorizontalAlign.Start);
-  }
-
-  @Builder
-  private deleteConfirmSheet(item: LostFoundItem) {
-    Column({ space: 18 }) {
-      Text('确认删除').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold);
-      Text(`确定删除“${item.title}”吗？删除后无法恢复。`).fontSize(AhuTypography.body);
-      if (this.deleteError.length > 0) Text(this.deleteError).fontSize(AhuTypography.label).fontColor(AhuColors.error);
-      Row({ space: 10 }) {
-        Button('取消', { type: ButtonType.Capsule }).layoutWeight(1).enabled(!this.deleting)
-          .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.chipUnselected)
-          .onClick(() => this.deleteTarget = undefined);
-        Button(this.deleting ? '删除中…' : '删除', { type: ButtonType.Capsule }).layoutWeight(1).enabled(!this.deleting)
-          .fontColor(AhuColors.onPrimaryAction).backgroundColor(AhuColors.error).onClick(() => this.confirmDelete());
-      }.width('100%');
-    }.width('86%').padding(24).backgroundColor(AhuColors.card).borderRadius(28).alignItems(HorizontalAlign.Start);
-  }
-
-  @Builder
   private imageViewer(item: LostFoundItem) {
     Stack({ alignContent: Alignment.Center }) {
       Image(this.imageUrlAt(item, this.imageViewerIndex)).width('100%').height('100%').objectFit(ImageFit.Contain);
@@ -272,12 +196,33 @@ export struct LostFoundPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      Column() {
-        AhuToolbar({ title: '失物招领', onBack: () => this.onBack() }) {
-          Button('发布', { type: ButtonType.Capsule }).backgroundColor(AhuColors.primaryAction)
-            .fontColor(AhuColors.onPrimaryAction).onClick(() => this.showPublish = true);
-          Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading).backgroundColor(AhuColors.card)
-            .fontColor(AhuColors.onSurface).onClick(() => this.load(true));
+      Column({ space: 16 }) {
+        AhuToolbar({
+          title: '失物招领',
+          searchable: true,
+          searchActive: this.searchExpanded,
+          searchText: this.query,
+          searchPlaceholder: '搜索联系人、电话、描述、校区等',
+          onSearchRequest: (): void => { this.searchExpanded = true; },
+          onSearchInput: (value: string): void => { this.query = value; },
+          onSearchExit: (): void => { this.searchExpanded = false; this.query = ''; },
+          filterable: true,
+          filterActive: this.hasFilter(),
+          onFilterClick: (): void => this.filterDialogController.open(),
+          onBack: (): void => this.onBack()
+        }) {
+          Button() {
+            SymbolGlyph($r('sys.symbol.more')).fontSize(20).fontColor([AhuColors.onSurface]);
+          }
+          .type(ButtonType.Circle)
+          .width(40)
+          .height(40)
+          .backgroundColor(AhuColors.card)
+          .bindMenu([
+            { value: '发布', action: (): void => { this.publishDialogController.open(); } },
+            { value: '我的帖子', action: (): void => { this.myPostsDialogController.open(); } },
+            { value: '刷新', action: (): void => { this.load(true); } }
+          ]);
         }
         Scroll() {
           Column({ space: AhuDimens.sectionSpacing }) {
@@ -290,38 +235,7 @@ export struct LostFoundPage {
                 .fontColor(this.state === 2 ? AhuColors.onPrimaryAction : AhuColors.onSurface)
                 .backgroundColor(this.state === 2 ? AhuColors.primaryAction : AhuColors.chipUnselected)
                 .onClick(() => this.switchState(2));
-              Button('我的', { type: ButtonType.Capsule }).fontColor(AhuColors.onSurface)
-                .backgroundColor(AhuColors.chipUnselected).onClick(() => this.showMyPosts = true);
-              Button(this.searchExpanded ? '关闭搜索' : '搜索', { type: ButtonType.Capsule }).fontColor(AhuColors.onSurface)
-                .backgroundColor(AhuColors.chipUnselected).onClick(() => {
-                  this.searchExpanded = !this.searchExpanded; if (!this.searchExpanded) this.query = '';
-                });
             }.width('100%').padding({ left: 16, right: 16 });
-            if (this.searchExpanded) {
-              TextInput({ text: this.query, placeholder: '搜索联系人、电话、描述、校区等全部信息' })
-                .onChange((value: string) => this.query = value).margin({ left: 16, right: 16 });
-            } else {
-              Scroll() { Row({ space: 8 }) {
-                Button('全部校区', { type: ButtonType.Capsule })
-                  .fontColor(this.selectedCampusId.length === 0 ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-                  .backgroundColor(this.selectedCampusId.length === 0 ? AhuColors.primaryAction : AhuColors.chipUnselected)
-                  .onClick(() => this.selectedCampusId = '');
-                ForEach(this.campuses, (item: CampusItem) => { Button(item.campusName, { type: ButtonType.Capsule })
-                  .fontColor(this.selectedCampusId === item.id ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-                  .backgroundColor(this.selectedCampusId === item.id ? AhuColors.primaryAction : AhuColors.chipUnselected)
-                  .onClick(() => this.selectedCampusId = item.id); }, (item: CampusItem) => item.id);
-              } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
-              Scroll() { Row({ space: 8 }) {
-                Button('全部类型', { type: ButtonType.Capsule })
-                  .fontColor(this.selectedTypeId.length === 0 ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-                  .backgroundColor(this.selectedTypeId.length === 0 ? AhuColors.primaryAction : AhuColors.chipUnselected)
-                  .onClick(() => this.selectedTypeId = '');
-                ForEach(this.types, (item: LostFoundType) => { Button(item.typeName, { type: ButtonType.Capsule })
-                  .fontColor(this.selectedTypeId === item.typeId ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-                  .backgroundColor(this.selectedTypeId === item.typeId ? AhuColors.primaryAction : AhuColors.chipUnselected)
-                  .onClick(() => this.selectedTypeId = item.typeId); }, (item: LostFoundType) => item.typeId);
-              } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
-            }
             Text(this.query.trim().length > 0 ? `“${this.query.trim()}”找到 ${this.filteredItems().length} 条` :
               `共 ${this.filteredItems().length} 条`).fontSize(AhuTypography.body).fontWeight(FontWeight.Medium)
               .padding({ left: 18, right: 18 });
@@ -366,19 +280,7 @@ export struct LostFoundPage {
         Column() { this.detail(this.selected); }.width('100%').height('100%')
           .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');
       }
-      if (this.showPublish) {
-        Column() { this.publishSheet(); }.width('100%').height('100%')
-          .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');
-      }
-      if (this.showMyPosts) {
-        Column() { this.myPostsSheet(); }.width('100%').height('100%')
-          .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');
-      }
-      if (this.deleteTarget) {
-        Column() { this.deleteConfirmSheet(this.deleteTarget); }.width('100%').height('100%')
-          .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#88000000');
-      }
       if (this.selected && this.imageViewerIndex >= 0) this.imageViewer(this.selected);
-    }.width('100%').height('100%');
+    }.width('100%').height('100%').backgroundColor(AhuColors.pageBackground);
   }
 }

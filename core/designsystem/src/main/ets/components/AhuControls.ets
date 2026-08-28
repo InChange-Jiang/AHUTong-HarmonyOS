@@ -1,4 +1,5 @@
 import { AhuColors, AhuTypography } from '../theme/AhuTokens';
+import { Chip, ChipSize } from '@ohos.arkui.advanced.Chip';
 
 @Component
 export struct AhuPrimaryButton {
@@ -26,13 +27,19 @@ export struct AhuChip {
   clickAction: () => void = () => {};
 
   build() {
-    Text(this.text)
-      .fontSize(AhuTypography.label)
-      .fontWeight(FontWeight.Medium)
-      .fontColor(this.selected ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-      .backgroundColor(this.selected ? AhuColors.chipSelected : AhuColors.chipUnselected)
-      .borderRadius(24)
-      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-      .onClick(() => this.clickAction());
+    Chip({
+      label: {
+        text: this.text,
+        fontSize: AhuTypography.label,
+        fontColor: this.selected ? AhuColors.onPrimaryAction : AhuColors.onSurface,
+        activatedFontColor: AhuColors.onPrimaryAction
+      },
+      activated: this.selected,
+      backgroundColor: AhuColors.chipUnselected,
+      activatedBackgroundColor: AhuColors.chipSelected,
+      borderRadius: 24,
+      size: ChipSize.NORMAL,
+      onClicked: (): void => this.clickAction()
+    });
   }
 }

@@ -296,7 +296,7 @@ export struct RepositoryPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      Column() {
+      Column({ space: 16 }) {
         AhuToolbar({ title: this.title(), onBack: () => this.back() }) {
           if (!this.showDownloads && this.selectedRepoId.length > 0) {
             Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading && !this.refreshing)
@@ -338,6 +338,6 @@ export struct RepositoryPage {
       .width('100%')
       .height('100%');
       if (this.pendingDeletePaths.length > 0) this.deleteConfirmation();
-    }.width('100%').height('100%');
+    }.width('100%').height('100%').backgroundColor(AhuColors.pageBackground);
   }
 }

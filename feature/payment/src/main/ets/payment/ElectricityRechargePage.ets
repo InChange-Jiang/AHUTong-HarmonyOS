@@ -223,7 +223,7 @@ export struct ElectricityRechargePage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      Column() {
+      Column({ space: 16 }) {
         AhuToolbar({ title: '电费充值', onBack: () => this.onBack() }) {
         }
         Scroll() {
@@ -293,6 +293,6 @@ export struct ElectricityRechargePage {
         Column() { this.resetRecordPanel(); }.width('100%').height('100%')
           .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');
       }
-    }.width('100%').height('100%');
+    }.width('100%').height('100%').backgroundColor(AhuColors.pageBackground);
   }
 }

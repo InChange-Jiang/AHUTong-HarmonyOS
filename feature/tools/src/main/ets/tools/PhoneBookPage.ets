@@ -101,7 +101,7 @@ export struct PhoneBookPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      Column() {
+      Column({ space: 16 }) {
         AhuToolbar({
           title: '校园电话本',
           searchable: true,
@@ -164,6 +164,6 @@ export struct PhoneBookPage {
             .fontColor(AhuColors.onSurface).onClick(() => this.dialChoice = undefined);
         }.width('86%').padding(24).backgroundColor(AhuColors.card).borderRadius(28).alignItems(HorizontalAlign.Start);
       }
-    }.width('100%').height('100%');
+    }.width('100%').height('100%').backgroundColor(AhuColors.pageBackground);
   }
 }
