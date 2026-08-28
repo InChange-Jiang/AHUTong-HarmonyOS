@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuTypography } from 'core_designsystem';
 import { ForecastDay, HourlyForecast, LifeIndexItem, WeatherAlert, WeatherResponse } from 'core_model';
 import { WeatherHomeConfig, WeatherRepository, WeatherRepositoryProvider } from 'data_weather';
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
@@ -111,7 +111,7 @@ export struct WeatherPage {
   }
 
   build() {
-    AhuScreen({ scrollable: true }) {
+    Column() {
       Row({ space: 10 }) {
         Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
           .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => this.onBack());
@@ -122,7 +122,7 @@ export struct WeatherPage {
           .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.locate());
         Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading).backgroundColor(AhuColors.card)
           .fontColor(AhuColors.onSurface).onClick(() => this.load());
-      }.width('100%').padding({ left: 16, right: 16, top: 20 });
+      }.width('100%').padding({ left: 16, right: 16, top: 24 });
       if (this.searching) {
         Row({ space: 8 }) {
           TextInput({ text: this.city, placeholder: '输入城市，如 合肥' }).layoutWeight(1)
@@ -133,6 +133,8 @@ export struct WeatherPage {
       }
       if (this.locationMessage.length > 0) Text(this.locationMessage).fontSize(AhuTypography.label)
         .fontColor(AhuColors.onSurfaceSecondary).padding({ left: 20, right: 20 });
+      Scroll() {
+        Column({ space: AhuDimens.sectionSpacing }) {
       Column({ space: 8 }) {
         Text('天气设置').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).width('100%');
         Text('选择要在首页卡片上显示的信息：').fontSize(AhuTypography.label)
@@ -226,6 +228,15 @@ export struct WeatherPage {
         if (this.error.length > 0) Text(`当前显示缓存：${this.error}`).fontSize(AhuTypography.label)
           .fontColor(AhuColors.error).padding({ left: 18, right: 18 });
       }
+        }
+        .width('100%');
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .scrollBar(BarState.Off);
     }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(AhuColors.pageBackground);
   }
 }

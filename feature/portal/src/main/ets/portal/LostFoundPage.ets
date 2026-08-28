@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuTypography } from 'core_designsystem';
 import { CampusItem, LostFoundItem, LostFoundPublishRequest, LostFoundType } from 'core_model';
 import { LostFoundRepository, getLostFoundRepository } from 'data_portal';
 import { BackPressDispatcher } from 'core_common';
@@ -272,7 +272,7 @@ export struct LostFoundPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      AhuScreen({ scrollable: true }) {
+      Column() {
         Row({ space: 12 }) {
           Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
             .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => this.onBack());
@@ -281,7 +281,7 @@ export struct LostFoundPage {
             .fontColor(AhuColors.onPrimaryAction).onClick(() => this.showPublish = true);
           Button('刷新', { type: ButtonType.Capsule }).enabled(!this.loading).backgroundColor(AhuColors.card)
             .fontColor(AhuColors.onSurface).onClick(() => this.load(true));
-        }.width('100%').padding({ left: 16, right: 16, top: 20 });
+        }.width('100%').padding({ left: 16, right: 16, top: 24 });
         Row({ space: 8 }) {
           Button('失物招领', { type: ButtonType.Capsule }).layoutWeight(1)
             .fontColor(this.state === 1 ? AhuColors.onPrimaryAction : AhuColors.onSurface)
@@ -326,6 +326,8 @@ export struct LostFoundPage {
         Text(this.query.trim().length > 0 ? `“${this.query.trim()}”找到 ${this.filteredItems().length} 条` :
           `共 ${this.filteredItems().length} 条`).fontSize(AhuTypography.body).fontWeight(FontWeight.Medium)
           .padding({ left: 18, right: 18 });
+        Scroll() {
+          Column({ space: AhuDimens.sectionSpacing }) {
         if (this.loading) {
           Column({ space: 12 }) { LoadingProgress().width(48).height(48).color(AhuColors.primaryAction); Text('正在加载…'); }
             .width('100%').padding(48);
@@ -353,7 +355,15 @@ export struct LostFoundPage {
             .fontColor(AhuColors.onSurface).onClick(() => this.load(false));
         }
         if (this.error.length > 0 && this.items.length > 0) Text(this.error).fontColor(AhuColors.error).padding(16);
+          }
+          .width('100%');
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off);
       }
+      .width('100%')
+      .height('100%');
       if (this.selected) {
         Column() { this.detail(this.selected); }.width('100%').height('100%')
           .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center).backgroundColor('#66000000');

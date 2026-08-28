@@ -101,56 +101,61 @@ export struct PhoneBookPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      Scroll() {
-        Column({ space: AhuDimens.sectionSpacing }) {
-          Row({ space: 10 }) {
-            Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-              .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => {
-                if (this.searching) { this.searching = false; this.query = ''; } else this.onBack();
-              });
-            Text('校园电话本').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
-            Button(this.searching ? '关闭' : '搜索', { type: ButtonType.Capsule }).backgroundColor(AhuColors.card)
-              .fontColor(AhuColors.onSurface).onClick(() => { this.searching = !this.searching; this.query = ''; });
-          }.width('100%').padding({ left: 16, right: 16, top: 20 });
-          if (this.searching) {
-            TextInput({ text: this.query, placeholder: '搜索电话或部门' }).onChange((value: string) => this.query = value)
-              .margin({ left: 16, right: 16 });
-          } else {
-            Scroll() { Row({ space: 8 }) { ForEach(PHONE_BOOK, (item: PhoneCategory) => {
-              Button(item.name, { type: ButtonType.Capsule })
-                .fontColor(this.category === item.name ? AhuColors.onPrimaryAction : AhuColors.onSurface)
-                .backgroundColor(this.category === item.name ? AhuColors.primaryAction : AhuColors.chipUnselected)
-                .onClick(() => this.category = item.name);
-            }, (item: PhoneCategory) => item.name); } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
-              .padding({ left: 16, right: 16 });
+      Column() {
+        Row({ space: 10 }) {
+          Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
+            .fontColor(AhuColors.onSurface).backgroundColor(AhuColors.card).onClick(() => {
+              if (this.searching) { this.searching = false; this.query = ''; } else this.onBack();
+            });
+          Text('校园电话本').fontSize(28).fontWeight(FontWeight.Bold).layoutWeight(1);
+          Button(this.searching ? '关闭' : '搜索', { type: ButtonType.Capsule }).backgroundColor(AhuColors.card)
+            .fontColor(AhuColors.onSurface).onClick(() => { this.searching = !this.searching; this.query = ''; });
+        }.width('100%').padding({ left: 16, right: 16, top: 24 });
+        if (this.searching) {
+          TextInput({ text: this.query, placeholder: '搜索电话或部门' }).onChange((value: string) => this.query = value)
+            .margin({ left: 16, right: 16 });
+        }
+        Scroll() {
+          Column({ space: AhuDimens.sectionSpacing }) {
+            if (!this.searching) {
+              Scroll() { Row({ space: 8 }) { ForEach(PHONE_BOOK, (item: PhoneCategory) => {
+                Button(item.name, { type: ButtonType.Capsule })
+                  .fontColor(this.category === item.name ? AhuColors.onPrimaryAction : AhuColors.onSurface)
+                  .backgroundColor(this.category === item.name ? AhuColors.primaryAction : AhuColors.chipUnselected)
+                  .onClick(() => this.category = item.name);
+              }, (item: PhoneCategory) => item.name); } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
+                .padding({ left: 16, right: 16 });
+            }
+            if (this.error.length > 0) Text(this.error).fontColor(AhuColors.error).padding({ left: 18, right: 18 });
+            if (this.visibleEntries().length === 0) {
+              Text(this.searching && this.query.length === 0 ? '请输入关键词' : '没有搜索结果').width('100%')
+                .textAlign(TextAlign.Center).fontColor(AhuColors.onSurfaceSecondary).padding(48);
+            } else {
+              ForEach(this.visibleEntries(), (item: Tel) => {
+                AhuInsetCard() {
+                  Row({ space: 12 }) {
+                    Column({ space: 6 }) {
+                      Text(item.name).fontSize(AhuTypography.body).fontWeight(FontWeight.Bold);
+                      if (item.tel) Text(`磬苑  0551-${item.tel}`).fontSize(AhuTypography.label)
+                        .fontColor(AhuColors.onSurfaceSecondary);
+                      if (item.tel2 && item.tel2 !== item.tel) Text(`龙河  0551-${item.tel2}`).fontSize(AhuTypography.label)
+                        .fontColor(AhuColors.onSurfaceSecondary);
+                    }.layoutWeight(1).alignItems(HorizontalAlign.Start);
+                    SymbolGlyph($r('sys.symbol.phone')).fontSize(24).fontColor([AhuColors.primaryAction]);
+                  }.width('100%').onClick(() => this.onEntryClick(item));
+                }
+              }, (item: Tel, index: number) => `${item.name}:${item.tel ?? ''}:${item.tel2 ?? ''}:${index}`);
+            }
           }
-          if (this.error.length > 0) Text(this.error).fontColor(AhuColors.error).padding({ left: 18, right: 18 });
-          if (this.visibleEntries().length === 0) {
-            Text(this.searching && this.query.length === 0 ? '请输入关键词' : '没有搜索结果').width('100%')
-              .textAlign(TextAlign.Center).fontColor(AhuColors.onSurfaceSecondary).padding(48);
-          } else {
-            ForEach(this.visibleEntries(), (item: Tel) => {
-              AhuInsetCard() {
-                Row({ space: 12 }) {
-                  Column({ space: 6 }) {
-                    Text(item.name).fontSize(AhuTypography.body).fontWeight(FontWeight.Bold);
-                    if (item.tel) Text(`磬苑  0551-${item.tel}`).fontSize(AhuTypography.label)
-                      .fontColor(AhuColors.onSurfaceSecondary);
-                    if (item.tel2 && item.tel2 !== item.tel) Text(`龙河  0551-${item.tel2}`).fontSize(AhuTypography.label)
-                      .fontColor(AhuColors.onSurfaceSecondary);
-                  }.layoutWeight(1).alignItems(HorizontalAlign.Start);
-                  SymbolGlyph($r('sys.symbol.phone')).fontSize(24).fontColor([AhuColors.primaryAction]);
-                }.width('100%').onClick(() => this.onEntryClick(item));
-              }
-            }, (item: Tel, index: number) => `${item.name}:${item.tel ?? ''}:${item.tel2 ?? ''}:${index}`);
-          }
+          .width('100%')
+          .padding({ bottom: AhuDimens.bottomNavClearance });
         }
         .width('100%')
-        .padding({ bottom: AhuDimens.bottomNavClearance });
+        .layoutWeight(1)
+        .scrollBar(BarState.Off);
       }
       .width('100%')
-      .height('100%')
-      .scrollBar(BarState.Off);
+      .height('100%');
       if (this.dialChoice) {
         Column({ space: 16 }) {
           Text(this.dialChoice.name).fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold);

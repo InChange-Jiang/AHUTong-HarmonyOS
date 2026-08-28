@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuLoading, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuDimens, AhuInsetCard, AhuLoading, AhuTypography } from 'core_designsystem';
 import { common } from '@kit.AbilityKit';
 import { DownloadedFile, GitHubContentItem, REPOSITORIES, RepoConfig, RepositoryManager } from './RepositoryManager';
 import { BackPressDispatcher } from 'core_common';
@@ -296,7 +296,7 @@ export struct RepositoryPage {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      AhuScreen({ scrollable: true }) {
+      Column() {
       Row() {
         Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
           .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.back());
@@ -326,10 +326,20 @@ export struct RepositoryPage {
           Button('关闭', { type: ButtonType.Capsule }).height(32).onClick(() => { this.error = ''; });
         }.margin({ left: 16, right: 16 }).padding(12).backgroundColor('#22F44336').borderRadius(12);
       }
+      Scroll() {
+        Column({ space: AhuDimens.sectionSpacing }) {
       if (this.showDownloads) this.downloadedList();
       else if (this.selectedRepoId.length === 0) this.repositorySelector();
       else this.browser();
+        }
+        .width('100%');
       }
+      .width('100%')
+      .layoutWeight(1)
+      .scrollBar(BarState.Off);
+      }
+      .width('100%')
+      .height('100%');
       if (this.pendingDeletePaths.length > 0) this.deleteConfirmation();
     }.width('100%').height('100%');
   }
