@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "data_crawler",
+    "type": "har",
+    "deviceTypes": [
+      "phone"
+    ],
+    "requestPermissions": [
+      { "name": "ohos.permission.INTERNET" }
+    ]
+  }
+}

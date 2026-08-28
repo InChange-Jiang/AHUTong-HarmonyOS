@@ -1,0 +1,31 @@
+{
+  "source": "GET https://jw.ahu.edu.cn/student/for-std/course-table/semester/132/print-data?semesterId=132",
+  "captured_at": "2026-08-28 (browser, 已登录会话)",
+  "semester": { "id": 132, "name": "2026-2027-1" },
+  "student": {
+    "id": 176237,
+    "name": "王锦程",
+    "code": "P125301134",
+    "grade": "2025",
+    "department": "电子信息工程学院",
+    "major": "电子信息工程",
+    "adminclass": "25级电子信息工程2班",
+    "credits": 28,
+    "activityCount": 12
+  },
+  "courses": [
+    { "courseName": "大学物理A（下）", "weekday": 1, "startUnit": 1, "endUnit": 2, "startTime": "8:00", "endTime": "9:35", "room": "博学北楼A104", "campus": "磬苑校区", "teacherNames": ["陈洋"], "weeksStr": "1~18" },
+    { "courseName": "电子线路", "weekday": 1, "startUnit": 8, "endUnit": 10, "startTime": "15:50", "endTime": "18:15", "room": "博学北楼C303", "campus": "磬苑校区", "teacherNames": ["王晓媛"], "weeksStr": "1~18" },
+    { "courseName": "数字电路与逻辑设计", "weekday": 1, "startUnit": 3, "endUnit": 5, "startTime": "9:50", "endTime": "12:15", "room": "博学北楼B104", "campus": "磬苑校区", "teacherNames": ["李民权"], "weeksStr": "1~18" },
+    { "courseName": "复变函数与数理方程", "weekday": 2, "startUnit": 3, "endUnit": 5, "startTime": "9:50", "endTime": "12:15", "room": "博学北楼C108", "campus": "磬苑校区", "teacherNames": ["任爱娣"], "weeksStr": "1~18" },
+    { "courseName": "形势与政策", "weekday": 2, "startUnit": 8, "endUnit": 10, "startTime": "15:50", "endTime": "18:15", "room": "博学北楼C202", "campus": "磬苑校区", "teacherNames": ["葛晓梅"], "weeksStr": "17" },
+    { "courseName": "大学英语（A）III", "weekday": 3, "startUnit": 1, "endUnit": 2, "startTime": "8:00", "endTime": "9:35", "room": "博学南楼B204", "campus": "磬苑校区", "teacherNames": ["雷红"], "weeksStr": "1~18" },
+    { "courseName": "概率论与数理统计A", "weekday": 3, "startUnit": 3, "endUnit": 5, "startTime": "9:50", "endTime": "12:15", "room": "博学北楼A302", "campus": "磬苑校区", "teacherNames": ["吴荣胜"], "weeksStr": "1~18" },
+    { "courseName": "数字电路与逻辑设计实验", "weekday": 3, "startUnit": 8, "endUnit": 10, "startTime": "15:50", "endTime": "18:15", "room": "笃行北楼A413[智能化数字实验室]", "campus": "磬苑校区", "teacherNames": ["许红升"], "weeksStr": "9~16" },
+    { "courseName": "大学物理A（下）", "weekday": 4, "startUnit": 6, "endUnit": 7, "startTime": "14:00", "endTime": "15:35", "room": "博学北楼A104", "campus": "磬苑校区", "teacherNames": ["陈洋"], "weeksStr": "1~18" },
+    { "courseName": "马克思主义基本原理", "weekday": 4, "startUnit": 8, "endUnit": 9, "startTime": "15:50", "endTime": "17:25", "room": "博学北楼A105", "campus": "磬苑校区", "teacherNames": ["葛晓梅"], "weeksStr": "1~18" },
+    { "courseName": "电子线路实验", "weekday": 5, "startUnit": 8, "endUnit": 10, "startTime": "15:50", "endTime": "18:15", "room": "笃行北楼A407", "campus": "磬苑校区", "teacherNames": ["王发牛"], "weeksStr": "9~16" },
+    { "courseName": "大学物理实验A（下）", "weekday": 5, "startUnit": 1, "endUnit": 4, "startTime": "8:00", "endTime": "11:25", "room": "笃行北楼A楼[物理基础实验中心]", "campus": "磬苑校区", "teacherNames": ["王章银", "章文", "宋志平", "宋伟", "尹晓峰", "谢传梅"], "weeksStr": "2~11" }
+  ],
+  "note": "weekday: 1=周一...7=周日。节数 = endUnit - startUnit + 1。本数据由已登录浏览器按安卓原项目两步逻辑抓取：1) GET /student/for-std/course-table 提取 currentSemester(id=132)；2) GET /student/for-std/course-table/semester/132/print-data?semesterId=132 返回完整 JSON。"
+}

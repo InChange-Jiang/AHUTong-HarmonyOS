@@ -1,0 +1,36 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "AHUTong HarmonyOS application entry module.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "feature_login": "file:../feature/login",
+    "data_auth": "file:../data/auth",
+    "data_crawler": "file:../data/crawler",
+    "data_schedule": "file:../data/schedule",
+    "feature_schedule": "file:../feature/schedule",
+    "feature_home": "file:../feature/home",
+    "feature_grade": "file:../feature/grade",
+    "feature_exam": "file:../feature/exam",
+    "feature_calendar": "file:../feature/calendar",
+    "feature_classroom": "file:../feature/classroom",
+    "feature_payment": "file:../feature/payment",
+    "feature_portal": "file:../feature/portal",
+    "feature_tools": "file:../feature/tools",
+    "feature_weather": "file:../feature/weather",
+    "feature_repository": "file:../feature/repository",
+    "feature_settings": "file:../feature/settings",
+    "feature_notification": "file:../feature/notification",
+    "feature_widget": "file:../feature/widget",
+    "feature_update": "file:../feature/update",
+    "feature_debug": "file:../feature/debug",
+    "core_designsystem": "file:../core/designsystem",
+    "core_common": "file:../core/common",
+    "core_datastore": "file:../core/datastore",
+    "core_network": "file:../core/network",
+    "core_sdk": "file:../core/sdk"
+  }
+}
+

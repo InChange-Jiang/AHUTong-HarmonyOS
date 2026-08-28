@@ -1,0 +1,13 @@
+{
+  "name": "data_schedule",
+  "version": "1.0.0",
+  "description": "Schedule data contracts and implementations for AHUTong.",
+  "main": "Index.ets",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "core_common": "file:../../core/common",
+    "core_model": "file:../../core/model",
+    "core_datastore": "file:../../core/datastore",
+    "data_crawler": "file:../crawler"
+  }
+}

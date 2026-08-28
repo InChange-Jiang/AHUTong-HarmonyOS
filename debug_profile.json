@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "bundle-name": "com.openahu.ahutong",
+  "description": "Debug Profile",
+  "developer-id": "CN=Debug",
+  "type": "debug",
+  "expiration": "2036-08-27T00:00:00.000Z",
+  "distribution": "developer",
+  "app-signing-cert": "CN=Debug",
+  "device-list": ["*"]
+}
