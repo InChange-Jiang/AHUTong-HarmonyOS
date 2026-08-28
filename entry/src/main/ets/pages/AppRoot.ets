@@ -2,7 +2,7 @@ import { AhuColors } from 'core_designsystem';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { AppLaunchGate } from 'feature_login';
-import { ScheduleSetupPage, WeeklySchedulePage } from 'feature_schedule';
+import { WeeklySchedulePage } from 'feature_schedule';
 import { HomePage } from 'feature_home';
 import { GradePage } from 'feature_grade';
 import { ExamPage } from 'feature_exam';
@@ -14,11 +14,10 @@ import { LostFoundPage } from 'feature_portal';
 import { PhoneBookPage, ToolsPage } from 'feature_tools';
 import { WeatherPage } from 'feature_weather';
 import { RepositoryPage } from 'feature_repository';
-import { SettingsPage } from 'feature_settings';
+import { SettingsPage, PreferencesPage, LicensePage, ContributorsPage } from 'feature_settings';
 import { CourseReminderManager } from 'feature_notification';
 import { ScheduleWidgetManager } from 'feature_widget';
-import { AppUpdateDialog, AppUpdateManager, AppUpdateStatus } from 'feature_update';
-import type { AppUpdateInfo } from 'feature_update';
+import { AppUpdateManager } from 'feature_update';
 import { GrayReleaseManager } from 'data_crawler';
 import { AppMaintenance } from '../app/AppMaintenance';
 import { BackPressDispatcher } from 'core_common';
@@ -29,10 +28,7 @@ export struct AppRoot {
   @State selectedIndex: number = 0;
   @State setupComplete: boolean = false;
   @State activePage: string = '';
-  @State updateInfo: AppUpdateInfo | undefined = undefined;
-  @State updateMessage: string = '';
   @State homeEditEnabled: boolean = false;
-  @StorageLink('ahu_liquid_glass') useLiquidGlass: boolean = true;
   @StorageLink('ahu_launch_route') @Watch('onLaunchRouteChanged') launchRoute: string = '';
   @StorageLink('ahu_logout_revision') @Watch('onLogoutRevision') logoutRevision: number = 0;
   @StorageLink('ahu_mock_revision') @Watch('onMockRevision') mockRevision: number = 0;
@@ -52,7 +48,6 @@ export struct AppRoot {
     await ScheduleWidgetManager.updateAll(widgetIds);
     if (clearAll) {
       AppStorage.setOrCreate('ahu_theme_color', '');
-      AppStorage.setOrCreate('ahu_liquid_glass', true);
     }
     this.setupComplete = false;
     const revision = AppStorage.get<number>('ahu_logout_revision') ?? 0;
@@ -63,7 +58,6 @@ export struct AppRoot {
     BackPressDispatcher.register('app_root', () => this.handleBackPress());
     this.setupComplete = this.scheduleSetupRepository.hasCompletedSetup();
     this.onLaunchRouteChanged();
-    this.checkUpdate(false);
     this.loadGrayState();
     // 与安卓保持一致：启动后尝试自动同步学期配置，失败也不影响正常使用
     this.syncScheduleConfig();
@@ -72,7 +66,6 @@ export struct AppRoot {
   aboutToDisappear(): void { BackPressDispatcher.unregister('app_root'); }
 
   private handleBackPress(): boolean {
-    if (this.updateInfo) { this.updateInfo = undefined; this.updateMessage = ''; return true; }
     if (this.activePage.length > 0) { this.activePage = ''; return true; }
     if (this.selectedIndex !== 0) { this.selectedIndex = 0; return true; }
     return false;
@@ -94,25 +87,6 @@ export struct AppRoot {
     this.selectedIndex = 0;
     const revision = AppStorage.get<number>('ahu_home_edit_request') ?? 0;
     AppStorage.setOrCreate('ahu_home_edit_request', revision + 1);
-  }
-
-  private async checkUpdate(manual: boolean): Promise<string> {
-    const result = await AppUpdateManager.check();
-    if (result.status === AppUpdateStatus.AVAILABLE && result.update) {
-      this.updateInfo = result.update;
-      this.updateMessage = '';
-    }
-    return manual ? result.message : '';
-  }
-
-  private async openAppGallery(): Promise<void> {
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    if (!await AppUpdateManager.openAppGallery(context)) this.updateMessage = '未找到应用市场，请使用项目发行页。';
-  }
-
-  private async openReleasePage(): Promise<void> {
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    if (!await AppUpdateManager.openReleasePage(context, this.updateInfo)) this.updateMessage = '无法打开项目发行页，请检查浏览器。';
   }
 
   private onLaunchRouteChanged(): void {
@@ -183,14 +157,10 @@ export struct AppRoot {
           appVersion: AppUpdateManager.currentVersion(),
           onLogout: () => this.logout(false),
           onClearAllData: () => this.logout(true),
-          onReminderChange: (enabled: boolean) => {
-            const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-            return CourseReminderManager.setEnabled(context, enabled);
-          },
-          onReconfigureTerm: () => { this.activePage = 'term_setup'; },
-          onCheckUpdate: () => this.checkUpdate(true),
-          onLoadUpdateIntro: () => AppUpdateManager.introduction(),
           debugEnabled: this.debugEnabled,
+          onOpenPreferences: () => { this.activePage = 'settings_preferences'; },
+          onOpenLicense: () => { this.activePage = 'settings_license'; },
+          onOpenContributors: () => { this.activePage = 'settings_contributors'; },
           onOpenDebug: () => { this.activePage = 'debug'; }
         });
       }
@@ -205,7 +175,7 @@ export struct AppRoot {
     .barMode(BarMode.Fixed)
     .barOverlap(true)
     .barBackgroundColor(AhuColors.card)
-    .barBackgroundBlurStyle(this.useLiquidGlass ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
+    .barBackgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THICK)
     .animationDuration(220)
     .onChange((index: number) => {
       this.selectedIndex = index;
@@ -215,8 +185,18 @@ export struct AppRoot {
 
   @Builder
   private postLoginContent() {
-    if (this.activePage === 'term_setup') {
-      ScheduleSetupPage({ onSetup: () => { this.setupComplete = true; this.activePage = ''; } });
+    if (this.activePage === 'settings_preferences') {
+      PreferencesPage({
+        onBack: () => { this.activePage = ''; },
+        onReminderChange: (enabled: boolean) => {
+          const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+          return CourseReminderManager.setEnabled(context, enabled);
+        }
+      });
+    } else if (this.activePage === 'settings_license') {
+      LicensePage({ onBack: () => { this.activePage = ''; } });
+    } else if (this.activePage === 'settings_contributors') {
+      ContributorsPage({ onBack: () => { this.activePage = ''; } });
     } else if (this.activePage === 'grade') {
       GradePage({ onBack: () => { this.activePage = ''; } });
     } else if (this.activePage === 'exam') {
@@ -251,15 +231,6 @@ export struct AppRoot {
     Stack() {
       AppLaunchGate({ rejectAction: () => this.terminateApplication() }) {
         this.postLoginContent();
-      }
-      if (this.updateInfo) {
-        AppUpdateDialog({
-          info: this.updateInfo,
-          message: this.updateMessage,
-          onAppGallery: () => this.openAppGallery(),
-          onReleasePage: () => this.openReleasePage(),
-          onDismiss: () => { this.updateInfo = undefined; this.updateMessage = ''; }
-        });
       }
     }
     .width('100%')

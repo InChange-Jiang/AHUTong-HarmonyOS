@@ -11,7 +11,6 @@ export class PreferencesKeys {
   static readonly SHOW_ALL_COURSE: string = 'is_show_all_course';
   static readonly NEXT_SCHEDULE: string = 'next_schedule';
   static readonly SHOW_QR_CODE: string = 'show_qr_code';
-  static readonly USE_LIQUID_GLASS: string = 'use_liquid_glass';
   static readonly COURSE_REMINDER_ENABLED: string = 'course_reminder_enabled';
   static readonly LIVE_COUNTDOWN_ENABLED: string = 'course_reminder_live_countdown_enabled';
   static readonly THEME_COLOR: string = 'theme_color_hex';

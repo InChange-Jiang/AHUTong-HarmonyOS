@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { common } from '@kit.AbilityKit';
 
 interface LicenseItem { name: string; author: string; url: string; license: string; }
@@ -32,13 +32,11 @@ export struct LicensePage {
   }
 
   build() {
-    AhuScreen({ scrollable: true }) {
-      Row({ space: 12 }) {
-        Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.onBack());
-        Text('开源协议').fontSize(AhuTypography.pageTitle).fontWeight(FontWeight.Bold).layoutWeight(1);
-      }.width('100%').padding({ left: 16, right: 16, top: 24 });
-      if (this.error.length > 0) Text(this.error).fontColor(AhuColors.error).padding({ left: 20 });
+    Column({ space: 16 }) {
+      AhuToolbar({ title: '开源协议', onBack: () => this.onBack() });
+      Scroll() {
+        Column({ space: 14 }) {
+          if (this.error.length > 0) Text(this.error).fontColor(AhuColors.error).padding({ left: 20 });
       ForEach(LICENSES, (item: LicenseItem) => {
         AhuInsetCard() {
           Column({ space: 4 }) {
@@ -48,7 +46,16 @@ export struct LicensePage {
             Text(item.url).fontSize(12).fontColor(AhuColors.onSurfaceSecondary).maxLines(1);
           }.width('100%').alignItems(HorizontalAlign.Start).onClick(() => this.open(item.url));
         }
-      }, (item: LicenseItem) => item.name);
+          }, (item: LicenseItem) => item.name);
+        }.padding({ bottom: 40 });
+      }
+      .layoutWeight(1)
+      .width('100%')
+      .align(Alignment.Top)
+      .scrollBar(BarState.Off);
     }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(AhuColors.pageBackground);
   }
 }

@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { AhuCache } from 'core_datastore';
 import { common } from '@kit.AbilityKit';
 import { notificationManager } from '@kit.NotificationKit';
@@ -17,7 +17,6 @@ const THEME_OPTIONS: Array<ThemeOption> = [
 export struct PreferencesPage {
   @State reminder: boolean = false;
   @State liveCountdown: boolean = false;
-  @State liquidGlass: boolean = true;
   @State themeColor: string = '';
   @State showCustom: boolean = false;
   @State customColor: string = '';
@@ -28,7 +27,7 @@ export struct PreferencesPage {
 
   aboutToAppear(): void {
     this.reminder = AhuCache.courseReminderEnabled(); this.liveCountdown = AhuCache.liveCountdownEnabled();
-    this.liquidGlass = AhuCache.useLiquidGlass(); this.themeColor = AhuCache.themeColor();
+    this.themeColor = AhuCache.themeColor();
   }
 
   private setTheme(color: string): void {
@@ -64,15 +63,11 @@ export struct PreferencesPage {
 
   build() {
     Stack() {
-      Scroll() {
-        Column({ space: 14 }) {
-          Row({ space: 12 }) {
-            Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-              .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.onBack());
-            Text('偏好设置').fontSize(AhuTypography.pageTitle).fontWeight(FontWeight.Bold).layoutWeight(1);
-          }.width('100%').padding({ left: 16, right: 16, top: 24 });
-
-          AhuInsetCard() {
+      Column({ space: 16 }) {
+        AhuToolbar({ title: '偏好设置', onBack: () => this.onBack() });
+        Scroll() {
+          Column({ space: 14 }) {
+            AhuInsetCard() {
             Column({ space: 16 }) {
               Text('通知').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).width('100%');
               Row() {
@@ -101,18 +96,6 @@ export struct PreferencesPage {
           }
 
           AhuInsetCard() {
-            Row() {
-              Column({ space: 4 }) { Text('液态玻璃').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold);
-                Text('启用液态玻璃效果').fontSize(AhuTypography.label).fontColor(AhuColors.onSurfaceSecondary); }
-              .alignItems(HorizontalAlign.Start).layoutWeight(1);
-              Toggle({ type: ToggleType.Switch, isOn: this.liquidGlass }).onChange((enabled: boolean) => {
-                this.liquidGlass = enabled; AhuCache.setUseLiquidGlass(enabled);
-                AppStorage.setOrCreate('ahu_liquid_glass', enabled);
-              });
-            }.width('100%');
-          }
-
-          AhuInsetCard() {
             Column({ space: 14 }) {
               Text('主题颜色').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).width('100%');
               Scroll() {
@@ -136,8 +119,15 @@ export struct PreferencesPage {
               }.scrollable(ScrollDirection.Horizontal).width('100%');
             }.width('100%').alignItems(HorizontalAlign.Start);
           }
-        }.padding({ bottom: 40 });
-      }.width('100%').height('100%');
+          }.padding({ bottom: 40 });
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off);
+      }
+      .width('100%')
+      .height('100%');
 
       if (this.showCustom) {
         Column({ space: 14 }) {

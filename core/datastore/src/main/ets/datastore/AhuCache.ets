@@ -286,8 +286,6 @@ export class AhuCache {
     return AhuPreferences.getBoolean(PreferencesKeys.WEATHER_SHOW_AQI, true);
   }
 
-  static setUseLiquidGlass(enabled: boolean): void { AhuPreferences.putBoolean(PreferencesKeys.USE_LIQUID_GLASS, enabled); }
-  static useLiquidGlass(): boolean { return AhuPreferences.getBoolean(PreferencesKeys.USE_LIQUID_GLASS, true); }
   static setCourseReminderEnabled(enabled: boolean): void {
     AhuPreferences.putBoolean(PreferencesKeys.COURSE_REMINDER_ENABLED, enabled);
   }

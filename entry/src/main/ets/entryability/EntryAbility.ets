@@ -26,7 +26,6 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     AhuPreferences.initialize(this.context);
     AppStorage.setOrCreate('ahu_theme_color', AhuCache.themeColor());
-    AppStorage.setOrCreate('ahu_liquid_glass', AhuCache.useLiquidGlass());
     AppStorage.setOrCreate('ahu_logout_revision', 0);
     AppStorage.setOrCreate('ahu_home_edit_request', 0);
     AppStorage.setOrCreate('ahu_mock_revision', 0);

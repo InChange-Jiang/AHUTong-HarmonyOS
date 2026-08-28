@@ -1,4 +1,4 @@
-import { AhuColors, AhuInsetCard, AhuScreen, AhuTypography } from 'core_designsystem';
+import { AhuColors, AhuInsetCard, AhuToolbar, AhuTypography } from 'core_designsystem';
 import { common } from '@kit.AbilityKit';
 
 interface Developer { name: string; description: string; qq: string; }
@@ -22,13 +22,11 @@ export struct ContributorsPage {
   }
 
   build() {
-    AhuScreen({ scrollable: true }) {
-      Row({ space: 12 }) {
-        Button('‹', { type: ButtonType.Circle }).width(40).height(40).fontSize(28)
-          .backgroundColor(AhuColors.card).fontColor(AhuColors.onSurface).onClick(() => this.onBack());
-        Text('贡献名单').fontSize(AhuTypography.pageTitle).fontWeight(FontWeight.Bold).layoutWeight(1);
-      }.width('100%').padding({ left: 16, right: 16, top: 24 });
-      Text('加入我们').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).padding({ left: 20 });
+    Column({ space: 16 }) {
+      AhuToolbar({ title: '贡献名单', onBack: () => this.onBack() });
+      Scroll() {
+        Column({ space: 14 }) {
+          Text('加入我们').fontSize(AhuTypography.sectionTitle).fontWeight(FontWeight.Bold).padding({ left: 20 });
       AhuInsetCard() {
         Column({ space: 4 }) { Text('Hello~').fontSize(AhuTypography.body).fontWeight(FontWeight.Bold);
           Text('We are waiting for you!\nGet connection with us now!\nClick me for more info!')
@@ -48,7 +46,16 @@ export struct ContributorsPage {
             }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           }.width('100%').onClick(() => this.contact(developer.qq));
         }
-      }, (developer: Developer) => developer.qq);
+          }, (developer: Developer) => developer.qq);
+        }.padding({ bottom: 40 });
+      }
+      .layoutWeight(1)
+      .width('100%')
+      .align(Alignment.Top)
+      .scrollBar(BarState.Off);
     }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(AhuColors.pageBackground);
   }
 }
