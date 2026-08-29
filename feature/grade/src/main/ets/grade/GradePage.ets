@@ -1,7 +1,7 @@
-import { AhuChip, AhuColors, AhuEmptyState, AhuInsetCard, AhuLoading, AhuToolbar, AhuTypography } from 'core_designsystem';
+import { AhuChip, AhuColors, AhuEmptyState, AhuInsetCard, AhuLoading, AhuTypography } from 'core_designsystem';
 import { GpaRankInfo, Grade, GradeItem, GradeStudentProfile, GpaSemesterSub, TermGrade } from 'core_model';
 import { GradeRepository, GradeRepositoryProvider } from 'data_grade';
-import { BackPressDispatcher } from 'core_common';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 
 @Component
 export struct GradePage {
@@ -10,31 +10,16 @@ export struct GradePage {
   @State selectedTerm: string = '';
   @State query: string = '';
   @State searchActive: boolean = false;
+  @State termSheetVisible: boolean = false;
   @State isLoading: boolean = true;
   @State errorMessage: string = '';
   @State profiles: Array<GradeStudentProfile> = [];
   @State selectedProfileId: string = '';
   @State rank?: GpaRankInfo = undefined;
   @State rankMessage: string = '';
-  onBack: () => void = () => {};
 
   aboutToAppear(): void {
-    BackPressDispatcher.register('grade_page', () => this.handleBackPress());
     this.load(false);
-  }
-
-  aboutToDisappear(): void {
-    BackPressDispatcher.unregister('grade_page');
-  }
-
-  private handleBackPress(): boolean {
-    if (this.searchActive) {
-      this.searchActive = false;
-      this.query = '';
-      return true;
-    }
-    this.onBack();
-    return true;
   }
 
   private async load(refresh: boolean): Promise<void> {
@@ -158,61 +143,151 @@ export struct GradePage {
     }
   }
 
-  build() {
-    Column({ space: 16 }) {
-      AhuToolbar({
-        title: '成绩单',
-        subtitle: this.termLabel(this.selected()),
-        searchable: true,
-        filterable: true,
-        refreshable: true,
-        filterMenuItems: this.termLabels(),
-        searchActive: this.searchActive,
-        searchText: this.query,
-        searchPlaceholder: '搜索课程、课程号或课程性质',
-        onBack: () => this.onBack(),
-        onSearchRequest: () => { this.searchActive = true; },
-        onSearchInput: (value: string) => { this.query = value; },
-        onSearchExit: () => { this.searchActive = false; this.query = ''; },
-        onFilterSelect: (index: number) => {
+  @Builder
+  private searchBar() {
+    Row({ space: 8 }) {
+      Row({ space: 8 }) {
+        SymbolGlyph($r('sys.symbol.magnifyingglass'))
+          .fontSize(16)
+          .fontColor([AhuColors.onSurfaceSecondary]);
+        TextInput({ text: this.query, placeholder: '搜索课程、课程号或课程性质' })
+          .layoutWeight(1)
+          .fontColor(AhuColors.onSurface)
+          .placeholderColor(AhuColors.onSurfaceSecondary)
+          .backgroundColor(Color.Transparent)
+          .onChange((value: string) => { this.query = value; });
+      }
+      .height(40)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(20)
+      .backgroundColor(AhuColors.card)
+      .layoutWeight(1)
+      .alignItems(VerticalAlign.Center);
+      Text('取消')
+        .fontSize(16)
+        .fontColor(AhuColors.primaryAction)
+        .onClick(() => { this.searchActive = false; this.query = ''; });
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center);
+  }
+
+  @Builder
+  private termSheet() {
+    Column({ space: 4 }) {
+      ForEach(this.termLabels(), (label: string, index: number) => {
+        Row({ space: 12 }) {
+          Text(label)
+            .fontSize(16)
+            .fontColor(AhuColors.onSurface)
+            .layoutWeight(1);
+          if (label === this.termLabel(this.selected())) {
+            SymbolGlyph($r('sys.symbol.checkmark'))
+              .fontSize(18)
+              .fontColor([AhuColors.primaryAction]);
+          }
+        }
+        .width('100%')
+        .padding({ top: 14, bottom: 14, left: 16, right: 16 })
+        .onClick(() => {
           const terms = this.grade?.termGradeList ?? [];
           if (index >= 0 && index < terms.length) {
             this.selectedTerm = this.termKey(terms[index]);
           }
-        },
-        onRefresh: () => this.load(true)
-      });
-      if (this.isLoading) {
-        AhuLoading({ message: '正在加载成绩' });
-      } else if (this.errorMessage.length > 0) {
-        Column({ space: 14 }) {
-          Text(this.errorMessage).fontColor(AhuColors.error).textAlign(TextAlign.Center);
-          Button('重试').onClick(() => this.load(false));
-        }.layoutWeight(1).justifyContent(FlexAlign.Center);
-      } else {
-        Scroll() {
-          Column({ space: 14 }) {
-            if (this.query.length === 0) {
-              if (this.profiles.length > 1) {
-                Scroll() { Row({ space: 8 }) {
-                  ForEach(this.profiles, (profile: GradeStudentProfile) => {
-                    AhuChip({ text: this.profileLabel(profile), selected: this.selectedProfileId === profile.id,
-                      clickAction: () => this.selectProfile(profile.id) });
-                  }, (profile: GradeStudentProfile) => profile.id);
-                } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
-              }
-              this.summary();
-            }
-            if (this.visibleItems().length === 0) {
-              AhuEmptyState({ text: this.query.length > 0 ? '未找到相关课程' : '本学期暂无成绩' });
-            } else {
-              ForEach(this.visibleItems(), (item: GradeItem) => { this.gradeCard(item); },
-                (item: GradeItem) => `${item.semesterId}-${item.courseNum}`);
-            }
-          }.width('100%').padding({ bottom: 24 });
-        }.width('100%').layoutWeight(1).align(Alignment.Top).scrollBar(BarState.Off);
-      }
+          this.termSheetVisible = false;
+        });
+      }, (label: string) => label);
     }
-    .width('100%').height('100%').backgroundColor(AhuColors.pageBackground);
+    .padding({ top: 8, bottom: 24 });
+  }
+
+  build() {
+    HdsNavDestination() {
+      Column({ space: 16 }) {
+        if (this.searchActive) {
+          this.searchBar();
+        }
+        if (this.isLoading) {
+          AhuLoading({ message: '正在加载成绩' });
+        } else if (this.errorMessage.length > 0) {
+          Column({ space: 14 }) {
+            Text(this.errorMessage).fontColor(AhuColors.error).textAlign(TextAlign.Center);
+            Button('重试').onClick(() => this.load(false));
+          }.layoutWeight(1).justifyContent(FlexAlign.Center);
+        } else {
+          Scroll() {
+            Column({ space: 14 }) {
+              // FREE 模式标题栏高度 138vp，滚动内容顶部预留占位避免被标题栏覆盖
+              Blank().height(138)
+              if (this.query.length === 0) {
+                if (this.profiles.length > 1) {
+                  Scroll() { Row({ space: 8 }) {
+                    ForEach(this.profiles, (profile: GradeStudentProfile) => {
+                      AhuChip({ text: this.profileLabel(profile), selected: this.selectedProfileId === profile.id,
+                        clickAction: () => this.selectProfile(profile.id) });
+                    }, (profile: GradeStudentProfile) => profile.id);
+                  } }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16, right: 16 });
+                }
+                this.summary();
+              }
+              if (this.visibleItems().length === 0) {
+                AhuEmptyState({ text: this.query.length > 0 ? '未找到相关课程' : '本学期暂无成绩' });
+              } else {
+                ForEach(this.visibleItems(), (item: GradeItem) => { this.gradeCard(item); },
+                  (item: GradeItem) => `${item.semesterId}-${item.courseNum}`);
+              }
+            }.width('100%').padding({ bottom: 24 });
+          }.width('100%').layoutWeight(1).align(Alignment.Top).scrollBar(BarState.Off);
+        }
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(AhuColors.pageBackground);
+    }
+    .titleBar({
+      content: {
+        title: {
+          mainTitle: '成绩单',
+          subTitle: this.termLabel(this.selected())
+        },
+        menu: {
+          maxCount: 3,
+          value: [
+            {
+              content: {
+                icon: $r('sys.symbol.magnifyingglass'),
+                action: () => { this.searchActive = true; }
+              }
+            },
+            {
+              content: {
+                icon: $r('sys.symbol.line_3_horizontal'),
+                action: () => { this.termSheetVisible = true; }
+              }
+            },
+            {
+              content: {
+                icon: $r('sys.symbol.arrow_clockwise'),
+                action: () => { this.load(true); }
+              }
+            }
+          ]
+        }
+      }
+    })
+    .bindSheet($$this.termSheetVisible, this.termSheet(), {
+      title: { title: '选择学期' },
+      height: SheetSize.MEDIUM,
+      showClose: true,
+      dragBar: true
+    })
+    .onBackPressed((): boolean => {
+      if (this.searchActive) {
+        this.searchActive = false;
+        this.query = '';
+        return true;
+      }
+      return false;
+    });
   }
 }

@@ -1,5 +1,7 @@
 import { AhuColors } from 'core_designsystem';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { HdsTabs, HdsNavigation } from '@kit.UIDesignKit';
 import { common } from '@kit.AbilityKit';
 import { AppLaunchGate } from 'feature_login';
 import { WeeklySchedulePage } from 'feature_schedule';
@@ -23,6 +25,8 @@ import { AppMaintenance } from '../app/AppMaintenance';
 import { BackPressDispatcher } from 'core_common';
 import { AhuCache } from 'core_datastore';
 
+interface GradeRouteParam { }
+
 @Component
 export struct AppRoot {
   @State selectedIndex: number = 0;
@@ -38,6 +42,7 @@ export struct AppRoot {
   debugEnabled: boolean = false;
   @BuilderParam debugContent: () => void = this.emptyDebugContent;
   private readonly scheduleSetupRepository: ScheduleSetupRepository = new ScheduleSetupRepository();
+  private readonly pathStack: NavPathStack = new NavPathStack();
 
   @Builder private emptyDebugContent() {}
 
@@ -104,6 +109,16 @@ export struct AppRoot {
     this.launchRoute = '';
   }
 
+  private openWidget(route: string): void {
+    hilog.info(0x0000, 'AHUTong', 'openWidget route=%{public}s', route);
+    if (route === 'grade') {
+      hilog.info(0x0000, 'AHUTong', 'pushPathByName grade');
+      this.pathStack.pushPathByName('grade', {} as GradeRouteParam);
+    } else if (route === 'exam' || route === 'school_calendar' || route === 'free_classroom' || route === 'bathroom' || route === 'electricity' || route === 'lost_found' || route === 'phone_book' || route === 'weather' || route === 'repository' || route === 'card_recharge') {
+      this.activePage = route;
+    }
+  }
+
   private onLogoutRevision(): void { this.setupComplete = false; this.activePage = ''; }
   private onMockRevision(): void { this.setupComplete = this.scheduleSetupRepository.hasCompletedSetup(); }
   private onGrayRevision(): void { this.loadGrayState(); }
@@ -119,7 +134,7 @@ export struct AppRoot {
 
   @Builder
   private mainContent() {
-    Tabs({ barPosition: BarPosition.End, index: this.selectedIndex }) {
+    HdsTabs({ barPosition: BarPosition.End, index: this.selectedIndex }) {
       TabContent() {
         HomePage({
           active: this.selectedIndex === 0,
@@ -127,11 +142,7 @@ export struct AppRoot {
           onOpenSchedule: () => {
             this.selectedIndex = 1;
           },
-          onOpenWidget: (route: string) => {
-            if (route === 'grade' || route === 'exam' || route === 'school_calendar' || route === 'free_classroom' || route === 'bathroom' || route === 'electricity' || route === 'lost_found' || route === 'phone_book' || route === 'weather' || route === 'repository') {
-              this.activePage = route;
-            }
-          },
+          onOpenWidget: (route: string) => { this.openWidget(route); },
           onOpenRecharge: () => {
             this.activePage = 'card_recharge';
           }
@@ -152,7 +163,7 @@ export struct AppRoot {
 
       TabContent() {
         ToolsPage({ homeEditEnabled: this.homeEditEnabled, onEditHome: () => this.requestHomeEdit(),
-          onOpenWidget: (route: string) => { this.activePage = route; } });
+          onOpenWidget: (route: string) => { this.openWidget(route); } });
       }
       .tabBar(new BottomTabBarStyle({
         normal: new SymbolGlyphModifier($r('sys.symbol.wrench_and_screwdriver')),
@@ -182,8 +193,10 @@ export struct AppRoot {
     .scrollable(false)
     .barMode(BarMode.Fixed)
     .barOverlap(true)
-    .barBackgroundColor(AhuColors.card)
-    .barBackgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THICK)
+    .barFloatingStyle({
+      barWidth: { smallWidth: 328, mediumWidth: 328, largeWidth: 328 },
+      barBottomMargin: 28
+    })
     .animationDuration(220)
     .onChange((index: number) => {
       this.selectedIndex = index;
@@ -205,8 +218,6 @@ export struct AppRoot {
       LicensePage({ onBack: () => { this.activePage = ''; } });
     } else if (this.activePage === 'settings_contributors') {
       ContributorsPage({ onBack: () => { this.activePage = ''; } });
-    } else if (this.activePage === 'grade') {
-      GradePage({ onBack: () => { this.activePage = ''; } });
     } else if (this.activePage === 'exam') {
       ExamPage({ onBack: () => { this.activePage = ''; } });
     } else if (this.activePage === 'school_calendar') {
@@ -235,10 +246,21 @@ export struct AppRoot {
     // 与安卓保持一致：登录后直接进入主页，课程设置仅在设置页面手动进入
   }
 
+  @Builder
+  navDestinationBuilder(name: string, param: Object) {
+    if (name === 'grade') {
+      GradePage();
+    }
+  }
+
   build() {
     Stack() {
       AppLaunchGate({ rejectAction: () => this.terminateApplication() }) {
-        this.postLoginContent();
+        HdsNavigation(this.pathStack) {
+          this.postLoginContent();
+        }
+        .hideTitleBar(true)
+        .navDestination(this.navDestinationBuilder);
       }
     }
     .width('100%')

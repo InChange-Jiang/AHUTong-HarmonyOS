@@ -245,6 +245,30 @@ export struct HomePage {
     });
   }
 
+  private gridRowCount(): number {
+    if (this.isEditing) return 4;
+    let lastIndex = -1;
+    this.slots.forEach((id: string, index: number) => {
+      if (id.length > 0 && this.widgetById(id)) lastIndex = index;
+    });
+    return Math.floor(lastIndex / 2) + 1;
+  }
+
+  private visibleSlotList(): Array<string> {
+    const rows = this.gridRowCount();
+    const visible: Array<string> = [];
+    for (let index = 0; index < rows * 2; index++) {
+      visible.push(this.slots[index] ?? '');
+    }
+    return visible;
+  }
+
+  private gridHeight(): number {
+    const rows = this.gridRowCount();
+    if (rows <= 0) return 0;
+    return rows * 80 + (rows - 1) * 12;
+  }
+
   private saveSlots(slots: Array<string>): void {
     const normalized = this.normalizeSlots(slots);
     this.slots = normalized;
@@ -470,8 +494,9 @@ export struct HomePage {
 
   @Builder
   private widgetGrid() {
-    Grid() {
-      ForEach(this.slots, (id: string, index: number) => {
+    if (this.gridRowCount() > 0) {
+      Grid() {
+        ForEach(this.visibleSlotList(), (id: string, index: number) => {
         GridItem() {
           if (id.length > 0 && this.widgetById(id)) {
             Stack({ alignContent: Alignment.TopEnd }) {
@@ -530,12 +555,13 @@ export struct HomePage {
           }
         }
       }, (_: string, index: number) => `${index}`);
+      }
+      .columnsTemplate('1fr 1fr')
+      .rowsGap(12)
+      .columnsGap(12)
+      .height(this.gridHeight())
+      .padding({ left: 16, right: 16 });
     }
-    .columnsTemplate('1fr 1fr')
-    .rowsGap(12)
-    .columnsGap(12)
-    .height(368)
-    .padding({ left: 16, right: 16 });
   }
 
   @Builder
@@ -592,11 +618,11 @@ export struct HomePage {
           Column({ space: 12 }) {
             this.editHeader();
             this.glance(this.todayCourses());
+            this.campusCard();
             this.widgetGrid();
             if (this.isEditing) {
               this.widgetEditor();
             }
-            this.campusCard();
           }
           .width('100%')
           .padding({ bottom: 80 });

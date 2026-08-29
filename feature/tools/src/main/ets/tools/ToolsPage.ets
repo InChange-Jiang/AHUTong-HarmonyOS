@@ -1,5 +1,6 @@
 import { AhuColors, AhuDimens, AhuInsetCard, AhuPageHeader, AhuTypography } from 'core_designsystem';
 import { AhuCache } from 'core_datastore';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 
 interface ToolEntry { id: string; title: string; symbol: Resource; tint: string; }
 
@@ -72,7 +73,10 @@ export struct ToolsPage {
                 SymbolGlyph(item.symbol).fontSize(34).fontColor([item.tint]);
                 Text(item.title).fontSize(AhuTypography.body).fontWeight(FontWeight.Medium).maxLines(1);
               }.width('100%').height(112).justifyContent(FlexAlign.Center).backgroundColor(AhuColors.card)
-                .borderRadius(24).onClick(() => this.onOpenWidget(item.id));
+                .borderRadius(24).onClick(() => {
+                  hilog.info(0x0000, 'AHUTong', 'grid item clicked id=%{public}s', item.id);
+                  this.onOpenWidget(item.id);
+                });
             }
           }, (item: ToolEntry) => item.id);
         }.columnsTemplate('1fr 1fr').columnsGap(12).rowsGap(12).padding({ left: 16, right: 16 });
